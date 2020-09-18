@@ -1,0 +1,64 @@
+---
+- name: Clean kafka dirs
+  include_tasks: clean.yml
+  tags:
+    - never
+    - clean
+
+- name: test pervius installation
+  include_tasks: is_isnstalled.yml
+
+- name: install java
+  yum:
+    name: "{{ packages }}"
+  environment: "{{ proxy_env }}"
+  vars:
+    packages:
+    - java-1.8.0-openjdk 
+    - java-1.8.0-openjdk-devel
+
+- name: Create kafka group
+  group:
+    name: '{{ kafka_group }}'
+    state: present
+
+- name: Create kafka user
+  user:
+    name: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    state: present
+    createhome: yes
+
+- name: install zookeeper
+  include_tasks: zoo.yml
+  tags:
+    - reconfigure
+  
+- name: install kafka
+  include_tasks: kafka.yml
+  tags:
+    - reconfigure
+
+- name: generate scripts
+  include_tasks: scripts.yml
+  tags:
+    - reconfigure
+
+- name: restart service zookeeper
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: zookeeper
+  tags:
+    - never
+    - reconfigure
+
+- name: restart service kafka
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: kafka
+  tags:
+    - never
+    - reconfigure
+    - restart

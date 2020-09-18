@@ -1,0 +1,15 @@
+[Unit]
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+User={{ kafka_user }}
+ExecStart={{ zoo_dir }}/bin/zkServer.sh start-foreground
+ExecStop={{ zoo_dir }}/bin/zkServer.sh stop
+ExecReload={{ zoo_dir }}/bin/zkServer.sh restart
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target
+

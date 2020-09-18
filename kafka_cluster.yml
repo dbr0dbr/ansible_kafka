@@ -1,0 +1,6 @@
+---
+- hosts: kafka
+  remote_user:
+    root
+  roles:
+   - kafka_node_centos

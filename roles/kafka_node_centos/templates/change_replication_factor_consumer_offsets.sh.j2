@@ -1,0 +1,60 @@
+#!/bin/bash
+ids={% for host in groups['kafka'] %}{{ hostvars[host]['node_id'] }}{% if not loop.last %},{% endif %}{% endfor %}
+
+cat <<EOF> /tmp/increase-replication-factor.json
+{"version":1,"partitions":[
+  {"topic":"__consumer_offsets","partition":0,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":1,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":2,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":3,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":4,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":5,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":6,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":7,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":8,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":9,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":10,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":11,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":12,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":13,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":14,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":15,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":16,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":17,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":18,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":19,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":20,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":21,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":22,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":23,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":24,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":25,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":26,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":27,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":28,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":29,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":30,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":31,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":32,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":33,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":34,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":35,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":36,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":37,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":38,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":39,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":40,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":41,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":42,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":43,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":44,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":45,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":46,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":47,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":48,"replicas":[$ids]},
+  {"topic":"__consumer_offsets","partition":49,"replicas":[$ids]}
+]}
+EOF
+
+{{ kafka_dir }}/bin/kafka-reassign-partitions.sh --zookeeper localhost:2181 --reassignment-json-file /tmp/increase-replication-factor.json --execute
+{{ kafka_dir }}/bin/kafka-topics.sh --describe --zookeeper 127.0.01:2181 --topic $topicname

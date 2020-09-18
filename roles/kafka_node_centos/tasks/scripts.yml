@@ -1,0 +1,95 @@
+- name: Create a scripts directory if it does not exist
+  file:
+    path: '{{ scripts_dir }}'
+    state: directory
+  tags:
+    - reconfigure
+
+- name: make script change_replication_factor.sh
+  template:
+    src: change_replication_factor.sh.j2
+    dest: '{{ scripts_dir }}/change_replication_factor.sh'
+  tags:
+    - reconfigure
+
+- name: make script change_replication_factor_consumer_offsets.sh
+  template:
+    src: change_replication_factor_consumer_offsets.sh.j2
+    dest: '{{ scripts_dir }}/change_replication_factor_consumer_offsets.sh'
+  tags:
+    - reconfigure
+
+- name: make script check_replicas.sh
+  template:
+    src: check_replicas.sh.j2
+    dest: '{{ scripts_dir }}/check_replicas.sh'
+  tags:
+    - reconfigure
+
+- name: make script info_all_topics.sh
+  template:
+    src: info_all_topics.sh.j2
+    dest: '{{ scripts_dir }}/info_all_topics.sh'
+  tags:
+    - reconfigure
+
+- name: make script info_topic.sh
+  template:
+    src: info_topic.sh.j2
+    dest: '{{ scripts_dir }}/info_topic.sh'
+  tags:
+    - reconfigure
+
+- name: make script list_topics.sh
+  template:
+    src: list_topics.sh.j2
+    dest: '{{ scripts_dir }}/list_topics.sh'
+  tags:
+    - reconfigure
+
+
+- name: make script read_from_topic.sh
+  template:
+    src: read_from_topic.sh.j2
+    dest: '{{ scripts_dir }}/read_from_topic.sh'
+  tags:
+    - reconfigure
+
+- name: make script write_to_topic.sh
+  template:
+    src: write_to_topic.sh.j2
+    dest: '{{ scripts_dir }}/write_to_topic.sh'
+  tags:
+    - reconfigure
+
+- name: make script delete_topic.sh
+  template:
+    src: delete_topic.sh.j2
+    dest: '{{ scripts_dir }}/delete_topic.sh'
+  tags:
+    - reconfigure
+
+- name: make script backup_all_topics.sh
+  template:
+    src: backup_all_topics.sh.j2
+    dest: '{{ scripts_dir }}/backup_all_topics.sh'
+  tags:
+    - reconfigure
+
+- name: make script create_topic.sh
+  template:
+    src: create_topic.sh.j2
+    dest: '{{ scripts_dir }}/create_topic.sh'
+  tags:
+    - reconfigure
+
+- name:  chmod +x
+  file:
+    path: '{{ scripts_dir }}'
+    state: directory
+    recurse: yes
+    mode: '0755'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+  tags: 
+    - reconfigure

@@ -1,0 +1,31 @@
+
+- name: test kafka_dir
+  stat: path={{ kafka_dir }}
+  register: p
+- fail: msg="{{ kafka_dir }} exist! Run with tag clean for clean all data or flag reconfigure for load only cofig files"
+  when: p.stat.isdir is defined and p.stat.isdir
+
+- name: test kafka_log_dir
+  stat: path={{ kafka_log_dir }}
+  register: p
+- fail: msg="{{ kafka_log_dir }} exist! Run with tag clean for clean all data or flag reconfigure for load only cofig files"
+  when: p.stat.isdir is defined and p.stat.isdir
+
+- name: test jmx_dir
+  stat: path={{ jmx_dir }}
+  register: p
+- fail: msg="{{ jmx_dir }} exist! Run with tag clean for clean all data or flag reconfigure for load only cofig files"
+  when: p.stat.isdir is defined and p.stat.isdir
+
+- name: test zoo_dir
+  stat: path={{ zoo_dir }}
+  register: p
+- fail: msg="{{ zoo_dir }} exist! Run with tag clean for clean all data or flag reconfigure for load only cofig files"
+  when: p.stat.isdir is defined and p.stat.isdir
+
+- name: test zoo_data_dir
+  stat: path={{ zoo_data_dir }}
+  register: p
+- fail: msg="{{ zoo_data_dir }} exist! Run with tag clean for clean all data or flag reconfigure for load only cofig files"
+  when: p.stat.isdir is defined and p.stat.isdir
+

@@ -1,0 +1,9 @@
+#!/bin/bash
+repl_factor_default={{ groups['kafka'] | length }}
+
+IFS=$'\n'
+for info_line in `{{ kafka_dir }}/bin/kafka-topics.sh --describe --zookeeper 127.0.01:2181 |grep ReplicationFactor`; do
+        topic=`echo $info_line| awk '{print $2}'`
+        repl_factor=`echo $info_line |awk -F 'ReplicationFactor: ' '{print $2}' |awk '{print $1}'`
+        if [ $repl_factor != $repl_factor_default ]; then echo  "Warning! topic $topic has replication factor $repl_factor!"; fi
+done
