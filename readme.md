@@ -15,6 +15,10 @@ ansible-playbook -i hosts kafka_cluster.yml --tags restart -- Просто ре�
 
 ansible-playbook -i hosts kafka_cluster.yml --extra-vars '{"proxy_env": {"http_proxy": "http://192.168.122.1:8888", "https_proxy": "http://192.168.122.1:8888"}}'
 
+Для запуска без прокси: 
+
+ansible-playbook -i hosts  kafka_cluster.yml --extra-vars '{"proxy_env": ""}'
+
 
 Структура папки с ролями:
 
