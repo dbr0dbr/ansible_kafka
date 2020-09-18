@@ -1,0 +1,52 @@
+
+- name: firewall - open ports 
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    - 9092
+    - 2181
+    - 9001
+    - 80
+
+- name: firewall - open vrrp proto
+  firewalld:
+    rich_rule: 'rule protocol value="vrrp" accept'
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: install soft
+  yum:
+    name: "{{ packages }}"
+  environment: "{{ proxy_env }}"
+  vars:
+    packages:
+    - keepalived
+    - haproxy
+
+- name: Template configuration file to keepalived.conf
+  template:
+    src: keepalived.conf.j2
+    dest: '/etc/keepalived/keepalived.conf'
+
+- name: Template configuration file to haproxy.cfg
+  template:
+    src: haproxy.cfg.j2
+    dest: '/etc/haproxy/haproxy.cfg'
+
+
+- name: enable and start keepalived.service
+  systemd:
+    name: keepalived
+    state: started
+    enabled: yes
+
+
+- name: enable and start haproxy.service
+  systemd:
+    name: haproxy
+    state: started
+    enabled: yes

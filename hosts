@@ -1,9 +1,11 @@
 [kafka]
 kafka-1	ansible_host=192.168.122.142.xip.io node_id=1
-#kafka-1	ansible_host=192.168.122.202.xip.io proxy=192.168.122.1:8888 node_id=1
 kafka-2	ansible_host=192.168.122.167.xip.io node_id=2
-#proxy_env="[{"http_proxy": "http://1.1.1.1:8888"}, {"https_proxy": "https://1.1.1.1:8888"}]"
 kafka-3	ansible_host=192.168.122.37.xip.io node_id=3
-#kafka-4	ansible_host=192.168.122.144.xip.io node_id=4
-# proxy_env='[{"http_proxy": "http://192.168.122.1:8888"}, {"https_proxy": "https://192.168.122.1:8888"}]'
-#proxy_env=\'[{"http_proxy": "http://1.1.1.1:8888"}, {"https_proxy": "https://1.1.1.1:8888"}]\'
+
+[ha]
+ha-1 ansible_host=192.168.122.114.xip.io 
+ha-2 ansible_host=192.168.122.93.xip.io 
+
+[ha:vars]
+virtual_ip=9.2.3.4/24

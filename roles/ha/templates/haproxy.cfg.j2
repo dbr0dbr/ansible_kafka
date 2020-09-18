@@ -1,0 +1,97 @@
+global
+#   nbproc 4
+#   cpu-map 1 0
+#   cpu-map 2 1
+#   cpu-map 3 2
+#   cpu-map 4 3
+   log /dev/log local0
+   log /dev/log local1 notice
+   chroot /var/lib/haproxy
+   stats timeout 30s
+   user haproxy
+   group haproxy
+   daemon
+   pidfile /var/run/haproxy.pid
+   stats socket /var/run/haproxy.sock mode 777 level admin expose-fd listeners
+#   stats bind-process 1
+
+defaults
+   log global
+   mode http
+   option dontlognull
+   timeout connect 5000
+   timeout client 50000
+   timeout server 50000
+
+frontend stat-1
+   bind *:9001
+   mode http
+#   bind-process 1
+   stats enable
+   stats uri /haproxy?stats
+   stats realm Haproxy\ Statistics
+   stats auth howtoforge:howtoforge            #User and Password for login to the monitoring dashboard
+   stats admin if TRUE
+
+#frontend stat-2
+#   bind *:9002
+#   mode http
+#   bind-process 2
+#   stats enable
+#   stats uri /haproxy?stats
+#   stats realm Haproxy\ Statistics
+#   stats auth howtoforge:howtoforge            #User and Password for login to the monitoring dashboard
+#   stats admin if TRUE
+
+#frontend stat-3
+#   bind *:9003
+#   mode http
+#   bind-process 3
+#   stats enable
+#   stats uri /haproxy?stats
+#   stats realm Haproxy\ Statistics
+#   stats auth howtoforge:howtoforge            #User and Password for login to the monitoring dashboard
+#   stats admin if TRUE
+
+#frontend stat-4
+#   bind *:9004
+#   mode http
+#   bind-process 4
+#   stats enable
+#   stats uri /haproxy?stats
+#   stats realm Haproxy\ Statistics
+#   stats auth howtoforge:howtoforge            #User and Password for login to the monitoring dashboard
+#   stats admin if TRUE
+
+
+frontend zookeeper
+   bind *:2181
+   mode tcp
+   default_backend zookeeper
+
+frontend kafka
+    bind :9092
+    mode tcp
+    default_backend kafka
+
+
+backend zookeeper
+    balance     source
+    hash-type   consistent
+    mode        tcp
+    option      tcp-check
+    tcp-check   connect port 9092
+    {% for host in groups['kafka'] %}
+    server zookeeper{{hostvars[host]['node_id']}} {{hostvars[host]['ansible_host']}}:2181 check
+    {% endfor %}
+
+
+backend kafka
+    balance     source
+    hash-type   consistent
+    mode        tcp
+    option      tcp-check
+    tcp-check   connect port 2181
+    {% for host in groups['kafka'] %}
+    server kafka{{hostvars[host]['node_id']}} {{hostvars[host]['ansible_host']}}:9092 check
+    {% endfor %}
