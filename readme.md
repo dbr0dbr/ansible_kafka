@@ -1,7 +1,12 @@
-hosts -- Файл с узлами, заполняется записями вида "kafka-1 ansible_host=192.168.122.142.xip.io node_id=1".
-kafka_cluster.yml -- Плейбук установки и изменения кластера.
+hosts -- Файл с узлами, заполняется записями вида "kafka-1 ansible_host=192.168.122.142.xip.io node_id=1" для нод кафки, ha-1 ansible_host=192.168.122.114.xip.io для нод haproxy, в секции [ha:vars] нужно указать отказоустойчивый айпи haproxy. 
+kafka_cluster.yml -- Плейбук установки и изменения кластера kafka. 
+ha.yml -- -- Плейбук установки и изменения кластера haproxy.
 
 Примеры использования:
+
+ansible-playbook all.yml -i hosts -- Установить кластер kafka и настроить haproxy
+
+ansible-playbook ha.yml -i hosts -- Установить кластер haproxy
 
 ansible-playbook -i hosts kafka_cluster.yml -- Запустить установку на все узлы из группы kafka в перечисленные в файле hosts. Если на каких-то хостах kafka уже установленна, они будут пропущенны, а установка будет произведена на остальные.
 
