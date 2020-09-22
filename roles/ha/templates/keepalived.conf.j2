@@ -1,7 +1,7 @@
 ! Configuration File for keepalived
 vrrp_instance VI_1 {
     state MASTER
-    interface enp1s0
+    interface {{ interface }}
     virtual_router_id 51
     priority 101
     advert_int 1

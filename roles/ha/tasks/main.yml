@@ -1,5 +1,4 @@
 
-- debug: var=hostvars
 - name: firewall - open ports 
   firewalld:
     port: "{{ item }}/tcp"
