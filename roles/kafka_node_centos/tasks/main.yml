@@ -5,8 +5,8 @@
     - never
     - clean
 
-- name: test pervius installation
-  include_tasks: is_isnstalled.yml
+#- name: test pervius installation
+#  include_tasks: is_isnstalled.yml
 
 - name: install java
   yum:
@@ -50,8 +50,9 @@
     daemon_reload: yes
     name: zookeeper
   tags:
-    - never
     - reconfigure
+    - restart
+    - never
 
 - name: restart service kafka
   systemd:
@@ -59,6 +60,6 @@
     daemon_reload: yes
     name: kafka
   tags:
-    - never
     - reconfigure
     - restart
+    - never

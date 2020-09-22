@@ -5,10 +5,13 @@
     dest: '{{ zoo_root_dir }}'
     copy: yes
 
-- name: rename zookeeper dir
-  shell: "if [ -d {{ zoo_dir }} ]; then rm -rf {{ zoo_dir }}; fi; mv {{ zoo_root_dir }}/apache-zookeeper* {{ zoo_dir }};"
-  args: 
-    warn: False
+- name: Create a symbolic link
+  file:
+    src: "{{ zoo_root_dir }}/{{ zoo_distr_name }}"
+    dest: "{{ zoo_dir }}"
+    owner: kafka
+    group: kafka
+    state: link
 
 - name: Create a zookeeper data directory if it does not exist
   file:
@@ -21,6 +24,8 @@
     dest: '{{ zoo_dir }}/conf/zoo.cfg'
   tags:
     - reconfigure
+  notify:
+    - restart zookeeper service 
     
 - name: Create id file
   shell: "echo '{{ node_id }}' > {{ zoo_data_dir }}/myid"

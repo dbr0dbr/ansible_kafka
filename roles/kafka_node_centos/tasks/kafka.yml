@@ -3,19 +3,28 @@
   unarchive:
     src: '{{ kafka_distr }}'
     dest: '{{ kafka_root_dir }}'
+    exclude:
+      - '{{ kafka_distr_name }}/config/server.properties'
     copy: yes
 
-- name: rename kafka dir
-  shell: "if [ -d {{ kafka_dir }} ]; then rm -rf {{ kafka_dir }}; fi; mv {{ kafka_root_dir }}/kafka_* {{ kafka_dir }};"
-  args: 
-    warn: False
+- name: Create a symbolic link
+  file:
+    src: "{{ kafka_root_dir }}/{{ kafka_distr_name }}"
+    dest: "{{ kafka_dir }}"
+    owner: kafka
+    group: kafka
+    state: link
 
 - name: Template configuration file to server.properties
   template:
     src: server.properties.j2
     dest: '{{ kafka_dir }}/config/server.properties'
+    owner: kafka
+    group: kafka
   tags:
     - reconfigure
+  notify:
+    - restart kafka service   
 
 - name: Create a jmx-explorer directory if it does not exist
   file:

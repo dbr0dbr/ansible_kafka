@@ -1,11 +1,12 @@
 [kafka]
-kafka-1	ansible_host=192.168.122.142.xip.io node_id=1
-kafka-2	ansible_host=192.168.122.167.xip.io node_id=2
-kafka-3	ansible_host=192.168.122.37.xip.io node_id=3
+kafka-1	ansible_host=192.168.122.142 node_id=1
+kafka-2	ansible_host=192.168.122.167 node_id=2
+kafka-3	ansible_host=192.168.122.37 node_id=3
+#kafka-4	ansible_host=192.168.122.144 node_id=4
 
 [ha]
-ha-1 ansible_host=192.168.122.114.xip.io 
-ha-2 ansible_host=192.168.122.93.xip.io 
+ha-1 ansible_host=192.168.122.46 
+ha-2 ansible_host=192.168.122.66
 
 [ha:vars]
-virtual_ip=9.2.3.4/24
+virtual_ip=192.168.123.3/24

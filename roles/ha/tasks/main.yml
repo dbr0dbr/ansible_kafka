@@ -27,15 +27,22 @@
     - keepalived
     - haproxy
 
+- name: Set haproxy_connect_any flag on and keep it persistent across reboots
+  shell: "setsebool -P haproxy_connect_any 1"
+    
 - name: Template configuration file to keepalived.conf
   template:
     src: keepalived.conf.j2
     dest: '/etc/keepalived/keepalived.conf'
+  notify:
+    - restart keepalived.service
 
 - name: Template configuration file to haproxy.cfg
   template:
     src: haproxy.cfg.j2
     dest: '/etc/haproxy/haproxy.cfg'
+  notify:
+    - restart haproxy.service  
 
 
 - name: enable and start keepalived.service

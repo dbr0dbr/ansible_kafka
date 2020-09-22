@@ -2,12 +2,14 @@ kafka_user: kafka
 kafka_group: kafka
 
 zoo_distr: "apache-zookeeper-3.6.1-bin.tar.gz"
+zoo_distr_name: "{{ ((zoo_distr | splitext)[0] | splitext)[0]  }}"
 zoo_root_dir: "/usr/local"
 zoo_dir: "{{ zoo_root_dir }}/zookeeper"
 zoo_data_dir: "/opt/zookeeper/data"
 zoo_cfg: "{{ zoo_dir }}/conf/zoo.cfg"
 
 kafka_distr: "kafka_2.13-2.5.0.tgz"
+kafka_distr_name: "{{ (kafka_distr | splitext)[0] }}"
 kafka_root_dir: "/home/kafka"
 kafka_dir: "{{ kafka_root_dir }}/kafka"
 jmx_dir: "{{ kafka_root_dir }}/prometheus"
