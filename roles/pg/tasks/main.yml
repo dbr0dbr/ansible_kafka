@@ -1,0 +1,2 @@
+- name: install PostgreSQL
+  include_tasks: install_pg.yml

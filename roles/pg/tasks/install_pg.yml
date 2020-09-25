@@ -1,0 +1,44 @@
+- name: "Install repository package"
+  yum: 
+    state: present
+    pkg: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ (ansible_distribution_version | splitext)[0] }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+  #when: ansible_distribution == 'CentOS' and (ansible_distribution_version | splitext)[0] == '7'
+
+- name: install PostgreSQL
+  yum:
+    name: postgresql{{ ver }}-server
+  environment: "{{ proxy_env }}"
+  
+- name: disable build-in module for centos 8
+  shell: dnf -qy module disable postgresql
+  when: ansible_distribution == 'CentOS' and (ansible_distribution_version | splitext)[0] == '8'
+
+- name: init db
+  shell: if [ ! -f /var/lib/pgsql/{{ ver }}/data/PG_VERSION ]; then /usr/pgsql-{{ ver }}/bin/postgresql-{{ ver }}-setup initdb; fi
+
+- name: Enable end start PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: started
+    enabled: yes
+
+- name: Template configuration file to postgresql.conf
+  template:
+    src: postgresql.conf.j2
+    dest: '/var/lib/pgsql/{{ ver }}/data/postgresql.conf'
+  notify:
+    - restart pgsql
+
+- name: Template configuration file to pg_hba.conf
+  template:
+    src: pg_hba.conf.j2
+    dest: '/var/lib/pgsql/{{ ver }}/data/pg_hba.conf'
+  notify:
+    - restart pgsql   
+
+- name: Open ports for pgsql
+  firewalld:
+    port: "5432/tcp"
+    permanent: yes
+    state: enabled
+    immediate: yes

@@ -10,3 +10,7 @@ ha-2 ansible_host=192.168.122.66 interface=enp1s0
 
 [ha:vars]
 virtual_ip=192.168.123.3/24
+
+[pg]
+pg-master   ansible_host=192.168.122.108
+pg-slave    ansible_host=192.168.122.144
