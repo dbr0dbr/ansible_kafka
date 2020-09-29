@@ -1,7 +1,15 @@
-! Configuration File for keepalived
+! Configuration File for keepalived node
+global_defs{
+  script_user root root
+}
+
+vrrp_script check_haproxy {
+   script      "/usr/bin/systemctl is-active --quiet haproxy"
+   interval    2
+}
 vrrp_instance VI_1 {
     state MASTER
-    interface {{ interface }}
+    interface eth0
     virtual_router_id 51
     priority 101
     advert_int 1
@@ -11,5 +19,8 @@ vrrp_instance VI_1 {
     }
     virtual_ipaddress {
         {{ virtual_ip }}
+    }
+    track_script {
+        check_haproxy
     }
 }

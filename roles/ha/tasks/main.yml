@@ -44,16 +44,25 @@
   notify:
     - restart haproxy.service  
 
-
 - name: enable and start keepalived.service
   systemd:
     name: keepalived
     state: started
     enabled: yes
 
-
 - name: enable and start haproxy.service
   systemd:
     name: haproxy
     state: started
     enabled: yes
+
+- name: "Ensure /etc/rc.local contains 'sleep 5; systemctl restart haproxy'"
+  lineinfile:
+    name: /etc/rc.local
+    line: "sleep 5; systemctl restart haproxy"
+    state: present
+
+- name: Changing perm of "/etc/rc.local", adding "+x"
+  file: 
+    dest: /etc/rc.local 
+    mode: a+x

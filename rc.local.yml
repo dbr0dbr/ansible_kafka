@@ -1,0 +1,8 @@
+---
+- hosts: kafka-1
+  remote_user:
+    root
+  roles:
+   - rc.local
+  tasks:
+    - debug: msg='task'
