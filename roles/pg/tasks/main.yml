@@ -1,2 +1,17 @@
 - name: install PostgreSQL
   include_tasks: install_pg.yml
+  tags:
+    - repl
+- name: Stop PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+  tags:
+    - clean
+    - never
+
+- name: Clean pg data
+  shell: rm -rf /var/lib/pgsql/12/data/*
+  tags: 
+    - clean
+    - never

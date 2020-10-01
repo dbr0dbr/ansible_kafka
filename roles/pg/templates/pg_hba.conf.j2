@@ -94,3 +94,14 @@ host    all             all             ::1/128                 ident
 local   replication     all                                     peer
 host    replication     all             127.0.0.1/32            ident
 host    replication     all             ::1/128                 ident
+#host    replication     all             huyasterIP/32            md5
+{% set true_list = ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True] %}
+{% if master in true_list %}
+{% for host in groups['pg'] %}
+{% if not 'master' in hostvars[host] or not hostvars[host]['master'] in true_list %}
+host    replication     all             {{ hostvars[host]['ansible_default_ipv4']['address'] }}/32            md5
+{% endif %}
+{% endfor %}
+{% endif %}
+# master = {{ master }}
+

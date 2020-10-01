@@ -2,13 +2,17 @@
   yum: 
     state: present
     pkg: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ (ansible_distribution_version | splitext)[0] }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
-  #when: ansible_distribution == 'CentOS' and (ansible_distribution_version | splitext)[0] == '7'
 
 - name: install PostgreSQL
   yum:
     name: postgresql{{ ver }}-server
   environment: "{{ proxy_env }}"
   
+- name: install psycopg2
+  yum:
+    name: python-psycopg2
+  environment: "{{ proxy_env }}"
+
 - name: disable build-in module for centos 8
   shell: dnf -qy module disable postgresql
   when: ansible_distribution == 'CentOS' and (ansible_distribution_version | splitext)[0] == '8'
@@ -21,6 +25,7 @@
     name: postgresql-{{ ver }}
     state: started
     enabled: yes
+  tags: reconfigure
 
 - name: Template configuration file to postgresql.conf
   template:
@@ -28,6 +33,7 @@
     dest: '/var/lib/pgsql/{{ ver }}/data/postgresql.conf'
   notify:
     - restart pgsql
+  tags: reconfigure
 
 - name: Template configuration file to pg_hba.conf
   template:
@@ -42,3 +48,41 @@
     permanent: yes
     state: enabled
     immediate: yes
+
+- name: set password for postgres
+  postgresql_user:
+    db: postgres
+    user: postgres
+    password: postgres
+  become_user: postgres
+  become: yes
+  tags: reconfigure
+
+- name: set password for postgres
+  postgresql_user:
+    db: postgres
+    user: repuser
+    password: '{{ pgpassword }}'
+    role_attr_flags: REPLICATION
+  become_user: postgres
+  become: yes
+  tags: reconfigure
+
+- name: Restart PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: restarted
+  tags: reconfigure
+
+- name: Set master_ip
+  set_fact:
+    master_ip: "{% for host in groups['pg'] %} {% if 'master' in hostvars[host] and hostvars[host]['master'] in [ 'yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True ] %} {{ hostvars[host]['ansible_default_ipv4']['address'] }} {% endif %} {% endfor %}"
+  
+- name: copy data to replicas
+  shell: rm -rf /var/lib/pgsql/12/data/*; pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ master_ip }} --username postgres --pgdata=/var/lib/pgsql/12/data -C -S pgstandby1
+  when: master not in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
+  become_user: postgres
+  become: yes
+  environment:
+      PGPASSWORD: '{{ pgpassword }}'
+  
