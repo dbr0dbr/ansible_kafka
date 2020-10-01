@@ -21,6 +21,7 @@
 - name: install soft
   yum:
     name: "{{ packages }}"
+    update_cache: yes
   environment: "{{ proxy_env }}"
   vars:
     packages:
