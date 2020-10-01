@@ -53,7 +53,7 @@
   postgresql_user:
     db: postgres
     user: postgres
-    password: postgres
+    password: '{{ pgpassword }}'
   become_user: postgres
   become: yes
   tags: reconfigure
@@ -62,7 +62,7 @@
   postgresql_user:
     db: postgres
     user: repuser
-    password: '{{ pgpassword }}'
+    password: '{{ reppassword }}'
     role_attr_flags: REPLICATION
   become_user: postgres
   become: yes
@@ -77,12 +77,17 @@
 - name: Set master_ip
   set_fact:
     master_ip: "{% for host in groups['pg'] %} {% if 'master' in hostvars[host] and hostvars[host]['master'] in [ 'yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True ] %} {{ hostvars[host]['ansible_default_ipv4']['address'] }} {% endif %} {% endfor %}"
+
+- name: Stop PostgreSQL service on replica
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+  when: master not in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
   
 - name: copy data to replicas
-  shell: rm -rf /var/lib/pgsql/12/data/*; pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ master_ip }} --username postgres --pgdata=/var/lib/pgsql/12/data -C -S pgstandby1
+  shell: rm -rf /var/lib/pgsql/12/data/*; pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ master_ip }} --username repuser --pgdata=/var/lib/pgsql/12/data -C -S pgstandby_{{inventory_hostname | replace('-','_') }}
   when: master not in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
   become_user: postgres
   become: yes
   environment:
-      PGPASSWORD: '{{ pgpassword }}'
-  
+      PGPASSWORD: '{{ reppassword }}'

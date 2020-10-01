@@ -11,7 +11,7 @@
     - never
 
 - name: Clean pg data
-  shell: rm -rf /var/lib/pgsql/12/data/*
+  shell: yum -y remove postgres\*; rm -rf /var/lib/pgsql/12/data/*; rm -rf /usr/pgsql-12; 
   tags: 
     - clean
     - never

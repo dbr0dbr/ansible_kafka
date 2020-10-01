@@ -84,9 +84,9 @@
 local   all             all                                     peer
 # IPv4 local connections:
 host    all             all             127.0.0.1/32            ident
-host	all	            all 			192.168.0.0/16	        md5
-host	all	            all 			127.0.0.1/32   	        md5
-host	all	            all 			127.0.0.1/32   	        password
+{% for ip in allow_ip %}
+host	all	            all 			{{ ip }}       	        md5
+{% endfor %}
 # IPv6 local connections:
 host    all             all             ::1/128                 ident
 # Allow replication connections from localhost, by a user with the
@@ -94,7 +94,6 @@ host    all             all             ::1/128                 ident
 local   replication     all                                     peer
 host    replication     all             127.0.0.1/32            ident
 host    replication     all             ::1/128                 ident
-#host    replication     all             huyasterIP/32            md5
 {% set true_list = ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True] %}
 {% if master in true_list %}
 {% for host in groups['pg'] %}

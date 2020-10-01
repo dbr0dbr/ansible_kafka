@@ -1,3 +1,5 @@
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
 [kafka]
 kafka-1	ansible_host=192.168.122.142 node_id=1
 kafka-2	ansible_host=192.168.122.167 node_id=2
@@ -12,6 +14,6 @@ ha-2 ansible_host=192.168.122.66 interface=enp1s0
 virtual_ip=192.168.123.3/24
 
 [pg]
-pg-2   ansible_host=192.168.122.121 host_key_checking=false master=true
-pg-1   ansible_host=192.168.122.59  host_key_checking=false
+pg-2   ansible_host=192.168.122.96 host_key_checking=false master=true
+pg-1   ansible_host=192.168.122.145  host_key_checking=false
 #pg-3   ansible_host=192.168.122.105 master=no
