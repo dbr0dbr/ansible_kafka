@@ -1,4 +1,7 @@
 
+- name: yum makecache
+  shell: yum makecache
+  
 - name: firewall - open ports 
   firewalld:
     port: "{{ item }}/tcp"
@@ -11,7 +14,7 @@
     - 9001
     - 80
 
-- name: firewall - open vrrp proto
+- name: firewall - open vrrp protobash 
   firewalld:
     rich_rule: 'rule protocol value="vrrp" accept'
     permanent: yes
