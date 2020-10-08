@@ -1,0 +1,21 @@
+---
+- hosts: redis
+  remote_user:
+    root
+  vars:
+    ip: '192.168.121.1'
+    log: /tmp/log
+
+  tasks:
+  - name: remove file
+    local_action: shell
+      rm -rf "{{ log }}"
+
+  - set_fact:
+      line: "inventory_hostname : '{{ inventory_hostname }}', hostname : '{{ ansible_hostname }}', ansible_host : '{{ ansible_host }}', 
+      dns : '{{ ansible_dns['nameservers'] }}', OS : '{{ ansible_distribution }} {{ ansible_distribution_version }}', interfaces : '{{ ansible_interfaces }}' "
+  
+  - name: write report
+    local_action: shell
+      echo "{{ line }}" >> "{{ log }}"
+    when: "ip in ansible_dns['nameservers']"
