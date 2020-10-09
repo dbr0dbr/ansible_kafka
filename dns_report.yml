@@ -1,15 +1,15 @@
 ---
-- hosts: all
+- hosts: redis
   remote_user:
     root
   vars:
     ip: '192.168.121.1'
     log: /tmp/log
-
+    log2: /tmp/log2
   tasks:
-  - name: remove file
+  - name: clean file
     local_action: shell
-      rm -rf "{{ log }}"
+      date > {{ log }} ; date >  {{ log2 }}
 
   - set_fact:
       line: "inventory_hostname : '{{ inventory_hostname }}', hostname : '{{ ansible_hostname }}', ansible_host : '{{ ansible_host }}', 
@@ -19,3 +19,42 @@
     local_action: shell
       echo "{{ line }}" >> "{{ log }}"
     when: "ip in ansible_dns['nameservers']"
+
+  - name: get line with eth in centos confs
+    shell: cat /etc/sysconfig/network-scripts/ifcfg-eth0 |grep {{ ip }}
+    register: conf_line
+    when: "'eth0' in ansible_interfaces and  ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat' or ansible_distribution ==  'OracleLinux'"
+  
+  - set_fact: config_line="{{conf_line}}"
+    when: conf_line.changed
+  
+  - name: get line with enp1s0 in centos confs
+    shell: cat /etc/sysconfig/network-scripts/ifcfg-enp1s0 | grep {{ ip }}
+    register: conf_line
+    when: "'enp1s0' in ansible_interfaces and ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat' or ansible_distribution ==  'OracleLinux'"
+
+  - set_fact: config_line="{{conf_line}}"
+    when: conf_line.changed
+  
+  - name: get line in debian confs
+    shell: "cat /etc/network/interfaces | grep {{ ip }}"
+    register: conf_line
+    when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+  
+  - set_fact: config_line="{{conf_line}}"
+    when: conf_line.changed
+  
+  - name: get line in resolv.conf
+    shell: "cat /etc/resolv.conf | grep {{ ip }}"
+    register: resolv_line
+
+  - name: set line for log2
+    set_fact:
+      line2: "{{ ansible_host }}, {{ ansible_distribution }} , conf_line  {{ config_line['stdout_lines'] }}, resolv_line   {{ resolv_line['stdout_lines'] }}"
+
+  - name: write report
+    local_action: shell
+      echo {{ line2 }} >> {{ log2 }}
+    when: "ip in ansible_dns['nameservers']"
+
+  

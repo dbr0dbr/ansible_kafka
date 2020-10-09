@@ -19,3 +19,5 @@ pg-3   ansible_host=192.168.122.105
 redis1   ansible_host=192.168.121.224
 redis2   ansible_host=192.168.121.228
 redis3   ansible_host=192.168.121.211
+cent8_dns   ansible_host=192.168.121.241
+ubuntu14.04_dns   ansible_host=192.168.121.17
