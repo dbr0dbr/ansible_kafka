@@ -4,6 +4,7 @@
     root
   vars:
     ip: '192.168.121.1'
+    new_ip: '192.168.0.1'
     log: /tmp/log
     log2: /tmp/log2
   tasks:
@@ -23,38 +24,78 @@
   - name: get line with eth in centos confs
     shell: cat /etc/sysconfig/network-scripts/ifcfg-eth0 |grep {{ ip }}
     register: conf_line
-    when: "'eth0' in ansible_interfaces and  ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat' or ansible_distribution ==  'OracleLinux'"
-  
+    when: "'eth0' in ansible_interfaces and ip in ansible_dns['nameservers'] and ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat' or ansible_distribution ==  'OracleLinux'"
+    
   - set_fact: config_line="{{conf_line}}"
     when: conf_line.changed
-  
-  - name: get line with enp1s0 in centos confs
-    shell: cat /etc/sysconfig/network-scripts/ifcfg-enp1s0 | grep {{ ip }}
+    
+  - name: get line with ens160 in centos confs
+    shell: cat /etc/sysconfig/network-scripts/ifcfg-ens160 | grep {{ ip }}
     register: conf_line
-    when: "'enp1s0' in ansible_interfaces and ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat' or ansible_distribution ==  'OracleLinux'"
-
+    when: "'ens160' in ansible_interfaces and ip in ansible_dns['nameservers'] and ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat' or ansible_distribution ==  'OracleLinux'"
+    
   - set_fact: config_line="{{conf_line}}"
     when: conf_line.changed
-  
+    
   - name: get line in debian confs
     shell: "cat /etc/network/interfaces | grep {{ ip }}"
     register: conf_line
-    when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
-  
+    when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian' and ip in ansible_dns['nameservers']
+    
   - set_fact: config_line="{{conf_line}}"
     when: conf_line.changed
-  
+    
   - name: get line in resolv.conf
     shell: "cat /etc/resolv.conf | grep {{ ip }}"
     register: resolv_line
+    when: ip in ansible_dns['nameservers']
 
   - name: set line for log2
     set_fact:
       line2: "{{ ansible_host }}, {{ ansible_distribution }} , conf_line  {{ config_line['stdout_lines'] }}, resolv_line   {{ resolv_line['stdout_lines'] }}"
+    when: ip in ansible_dns['nameservers']
 
   - name: write report
     local_action: shell
       echo {{ line2 }} >> {{ log2 }}
     when: "ip in ansible_dns['nameservers']"
-
+    
+  - name: change line in /etc/resolv.conf
+    replace:
+      dest: /etc/resolv.conf
+      regexp: '{{ ip }}'
+      replace: '{{ new_ip }}'
+    tags: 
+      - replace
+      - never
   
+  - name: change line with eth in centos confs
+    replace:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+      regexp: '{{ ip }}'
+      replace: '{{ new_ip }}'
+    when: "'eth0' in ansible_interfaces and  ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat' or ansible_distribution ==  'OracleLinux'"
+    tags: 
+      - replace
+      - never
+
+
+  - name: change line with ens160 in centos confs
+    replace:
+      dest: /etc/sysconfig/network-scripts/ifcfg-ens160
+      regexp: '{{ ip }}'
+      replace: '{{ new_ip }}'
+    when: "'ens160' in ansible_interfaces and ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat' or ansible_distribution ==  'OracleLinux'"
+    tags: 
+      - replace
+      - never
+
+  - name: change line in debian confs
+    replace:
+      dest: /etc/network/interfaces
+      regexp: '{{ ip }}'
+      replace: '{{ new_ip }}'
+    when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+    tags: 
+      - replace
+      - never
