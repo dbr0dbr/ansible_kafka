@@ -1,0 +1,36 @@
+---
+- name: Disable SELinux at next reboot
+  selinux:
+    state: disabled
+  register: task_result
+
+- name: Reboot immediately if there was a change.
+  shell: "sleep 5 && reboot"
+  async: 1
+  poll: 0
+  when: task_result is changed
+
+- name: Wait for the reboot to complete if there was a change.
+  wait_for_connection:
+    connect_timeout: 20
+    sleep: 5
+    delay: 5
+    timeout: 300
+  when: task_result is changed
+
+
+- include: install.yml
+  
+- debug: msg="redis-restart"
+  notify: restart redis
+  changed_when: true
+  tags: 
+    - never
+    - restart
+
+- name: clean all
+  shell: systemctl stop redis; systemctl stop redis-slave; yum -y remove redis; rm -rf /etc/redis*; rm -rf /var/lib/redis*; rm -rf /usr/lib/systemd/system/redis*
+  tags:
+    - never
+    - clean
+

@@ -1,0 +1,9 @@
+---
+- name: restart redis
+  service:
+    name: "{{ item }}"
+    state: restarted
+    daemon_reload: yes
+  with_items:
+    - redis-slave
+    - redis

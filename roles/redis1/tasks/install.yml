@@ -1,0 +1,85 @@
+
+- name: install redis
+  yum:
+    name: redis
+    state: present
+  environment: "{{ proxy_env }}"
+
+- name: Open ports for redis
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    - 6379
+    - 16379
+    - 6380
+    - 16380
+    
+- name: Template configuration file to redis.conf
+  template:
+    src: redis.conf.j2
+    dest: '/etc/redis.conf'
+    owner: redis
+    group: redis
+  notify:
+    - restart redis
+  tags: reconfigure
+
+- name: Template configuration file to redis-slave.conf
+  template:
+    src: redis-slave.conf.j2
+    dest: '/etc/redis-slave.conf'
+    owner: redis
+    group: redis
+  notify:
+    - restart redis
+  tags: reconfigure
+
+- name: copy redis servce file
+  copy: 
+    src: 'redis.service'
+    dest: '/usr/lib/systemd/system/redis.service'
+  notify:
+    - restart redis
+  tags: reconfigure
+
+- name: copy redis-slave servce file
+  copy: 
+    src: 'redis-slave.service'
+    dest: '/usr/lib/systemd/system/redis-slave.service'
+  notify:
+    - restart redis
+  tags: reconfigure
+    
+- name: Creates redis slave directory
+  file:
+    path: /var/lib/redis-slave/
+    state: directory
+    owner: redis
+    group: redis
+  
+- name: enable and start redis.service
+  systemd:
+    name: '{{ item }}'
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  with_items:
+    - redis-slave
+    - redis
+
+- name: create cluster command
+  set_fact: 
+    create_cluster_command: 
+      "echo yes | redis-cli --cluster create 
+      {% for host in groups['redis'] %}{{ hostvars[host]['ansible_default_ipv4']['address'] }}:6379{% if not loop.last %} {% endif %}{% endfor %} 
+      {% for host in groups['redis'] %}{{ hostvars[host]['ansible_default_ipv4']['address'] }}:6380{% if not loop.last %} {% endif %}{% endfor %} 
+      --cluster-replicas 1"
+
+- name: run create cluster on first node in group redis
+  shell: '{{ create_cluster_command }}'
+  when: inventory_hostname == groups['redis'][0]
+
+
