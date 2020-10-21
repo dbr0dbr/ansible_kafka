@@ -1,0 +1,5 @@
+- debug: var=proxy_env
+- name: install metricbeat-7.9.2
+  yum:
+    name: metricbeat-7.9.2
+  environment: "{{ proxy_env }}"

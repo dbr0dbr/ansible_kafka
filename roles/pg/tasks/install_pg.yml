@@ -26,7 +26,7 @@
     name: postgresql-{{ ver }}
     state: started
     enabled: yes
-  tags: reconfigure
+  
 
 - name: Template configuration file to postgresql.conf
   template:

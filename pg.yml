@@ -4,8 +4,4 @@
     root
   roles:
    - pg
-  vars: 
-    proxy_env:
-      http_proxy: http://192.168.121.1:8888
-      https_proxy: https://192.168.121.1:8888
-      no_proxy: .atbmarket.com,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16    
+  

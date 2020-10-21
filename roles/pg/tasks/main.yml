@@ -2,6 +2,8 @@
   include_tasks: install_pg.yml
   tags:
     - repl
+    - reconfigure
+    
 - name: Stop PostgreSQL service
   systemd:
     name: postgresql-{{ ver }}

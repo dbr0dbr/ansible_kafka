@@ -190,7 +190,7 @@ dynamic_shared_memory_type = posix      # the default is the first option
 
 # - Settings -
 
-#wal_level = replica                    # minimal, replica, or logical
+wal_level = replica                    # minimal, replica, or logical
                                         # (change requires restart)
 #fsync = on                             # flush data to disk for crash safety
                                         # (turning this off can cause
@@ -228,14 +228,19 @@ min_wal_size = 80MB
 #checkpoint_warning = 30s               # 0 disables
 
 # - Archiving -
-
+{% set true_list = ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True] %}
+{% if master in true_list %}
+archive_mode = on
+archive_command = 'cp %p /tmp/%f'
+archive_timeout = {{ archive_timeout }}
+{% endif %}
 #archive_mode = off             # enables archiving; off, on, or always
                                 # (change requires restart)
 #archive_command = ''           # command to use to archive a logfile segment
                                 # placeholders: %p = path of file to archive
                                 #               %f = file name only
                                 # e.g. 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'
-#archive_timeout = 0            # force a logfile segment switch after this
+#archive_timeout = {{ archive_timeout }}            # force a logfile segment switch after this
                                 # number of seconds; 0 disables
 
 # - Archive Recovery -

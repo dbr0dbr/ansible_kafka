@@ -1,8 +1,3 @@
-proxy_env:
-  http_proxy: http://192.168.122.1:8888
-  https_proxy: http://192.168.122.1:8888
-  no_proxy: .atbmarket.com,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
-
 allow_ip:
   - 192.168.0.0/16
   - 10.0.0.0/8
@@ -12,3 +7,5 @@ pgpassword: postgres
 reppassword: repuser
 ver: 12
 master: False
+archive_path: /tmp
+archive_timeout: 60

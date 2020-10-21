@@ -1,6 +1,6 @@
 ---
-- hosts: ha
+- hosts: kafka
   remote_user:
     root
   roles:
-   - ha
+   - metricbeat_kafka

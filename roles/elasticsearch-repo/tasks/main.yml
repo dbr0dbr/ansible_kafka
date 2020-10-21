@@ -1,0 +1,10 @@
+- name: Import a key from a url
+  rpm_key:
+    state: present
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  environment: "{{ proxy_env }}"
+
+- name: Create repo file
+  copy:
+    src: elasticsearch.repo
+    dest: /etc/yum.repos.d/elasticsearch.repo
