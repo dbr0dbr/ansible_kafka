@@ -15,8 +15,8 @@ ha-2 ansible_host=192.168.122.66 interface=enp1s0
 virtual_ip=192.168.123.3/24
 
 [pg]
-pg-1   ansible_host=192.168.121.253  master=true
-pg-2   ansible_host=192.168.121.218
+pg-1   ansible_host=192.168.121.197  master=true
+#pg-2   ansible_host=192.168.121.176
 
 
 [redis]

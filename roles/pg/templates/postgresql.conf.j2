@@ -247,6 +247,7 @@ archive_timeout = {{ archive_timeout }}
 
 # These are only used in recovery mode.
 
+restore_command = 'cp /tmp/%f %p'
 #restore_command = ''           # command to use to restore an archived logfile segment
                                 # placeholders: %p = path of file to restore
                                 #               %f = file name only
