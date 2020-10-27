@@ -78,9 +78,17 @@
     state: started
     enabled: yes
 
-- name: change loglevel
+- name: change loglevel for connect-log4j.properties
   replace:
     path: '{{ kafka_dir }}/config/connect-log4j.properties'
+    regexp: INFO
+    replace: WARN
+  tags: 
+    - reconfigure
+
+- name: change loglevel for log4j.properties
+  replace:
+    path: '{{ kafka_dir }}/config/log4j.properties'
     regexp: INFO
     replace: WARN
   tags: 
