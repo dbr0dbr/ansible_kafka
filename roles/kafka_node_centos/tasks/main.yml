@@ -38,6 +38,7 @@
   include_tasks: kafka.yml
   tags:
     - reconfigure
+    - change
 
 - name: generate scripts
   include_tasks: scripts.yml
