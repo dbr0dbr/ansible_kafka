@@ -8,7 +8,14 @@
   yum:
     name: postgresql{{ ver }}-server
   environment: "{{ proxy_env }}"
-  
+
+- name: install PostgreSQL
+  yum:
+    name: postgresql{{ ver }}-contrib
+  environment: "{{ proxy_env }}"
+  tags: 
+    - reconfigure
+
 - name: install psycopg2
   yum:
     name: python-psycopg2
@@ -50,6 +57,13 @@
     state: enabled
     immediate: yes
 
+
+- name: Restart PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: restarted
+  tags: reconfigure
+  
 - name: set password for postgres
   postgresql_user:
     db: postgres
@@ -67,12 +81,6 @@
     role_attr_flags: REPLICATION
   become_user: postgres
   become: yes
-  tags: reconfigure
-
-- name: Restart PostgreSQL service
-  systemd:
-    name: postgresql-{{ ver }}
-    state: restarted
   tags: reconfigure
 
 - name: Set master_ip

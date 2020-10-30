@@ -61,7 +61,7 @@ listen_addresses = '*'         # what IP address(es) to listen on;
                                         # defaults to 'localhost'; use '*' for all
                                         # (change requires restart)
 port = 5432                            # (change requires restart)
-max_connections = 100                   # (change requires restart)
+max_connections = {{ max_connections }}                   # (change requires restart)
 #superuser_reserved_connections = 3     # (change requires restart)
 #unix_socket_directories = '/var/run/postgresql, /tmp'  # comma-separated list of directories
                                         # (change requires restart)
@@ -118,7 +118,7 @@ max_connections = 100                   # (change requires restart)
 
 # - Memory -
 
-shared_buffers = 128MB                  # min 128kB
+shared_buffers = {{ shared_buffers }}                  # min 128kB
                                         # (change requires restart)
 #huge_pages = try                       # on, off, or try
                                         # (change requires restart)
@@ -127,8 +127,8 @@ shared_buffers = 128MB                  # min 128kB
                                         # (change requires restart)
 # Caution: it is not advisable to set max_prepared_transactions nonzero unless
 # you actively intend to use prepared transactions.
-#work_mem = 4MB                         # min 64kB
-#maintenance_work_mem = 64MB            # min 1MB
+work_mem = {{ work_mem }}                         # min 64kB
+maintenance_work_mem = {{ maintenance_work_mem }}            # min 1MB
 #autovacuum_work_mem = -1               # min 1MB, or -1 to use maintenance_work_mem
 #max_stack_depth = 2MB                  # min 100kB
 #shared_memory_type = mmap              # the default is the first option
@@ -172,12 +172,12 @@ dynamic_shared_memory_type = posix      # the default is the first option
 
 # - Asynchronous Behavior -
 
-#effective_io_concurrency = 1           # 1-1000; 0 disables prefetching
-#max_worker_processes = 8               # (change requires restart)
-#max_parallel_maintenance_workers = 2   # taken from max_parallel_workers
-#max_parallel_workers_per_gather = 2    # taken from max_parallel_workers
+effective_io_concurrency = {{ effective_io_concurrency }}           # 1-1000; 0 disables prefetching
+max_worker_processes = {{ max_worker_processes }}               # (change requires restart)
+max_parallel_maintenance_workers = {{ max_parallel_maintenance_workers }}   # taken from max_parallel_workers
+max_parallel_workers_per_gather = {{ max_parallel_workers_per_gather }}    # taken from max_parallel_workers
 #parallel_leader_participation = on
-#max_parallel_workers = 8               # maximum number of max_worker_processes that
+max_parallel_workers = {{ max_parallel_workers }}               # maximum number of max_worker_processes that
                                         # can be used in parallel operations
 #old_snapshot_threshold = -1            # 1min-60d; -1 disables; 0 is immediate
                                         # (change requires restart)
@@ -210,7 +210,7 @@ wal_level = replica                    # minimal, replica, or logical
                                         # (change requires restart)
 #wal_init_zero = on                     # zero-fill new WAL files
 #wal_recycle = on                       # recycle WAL files
-#wal_buffers = -1                       # min 32kB, -1 sets based on shared_buffers
+wal_buffers = {{ wal_buffers }}                       # min 32kB, -1 sets based on shared_buffers
                                         # (change requires restart)
 #wal_writer_delay = 200ms               # 1-10000 milliseconds
 #wal_writer_flush_after = 1MB           # measured in pages, 0 disables
@@ -221,9 +221,9 @@ wal_level = replica                    # minimal, replica, or logical
 # - Checkpoints -
 
 #checkpoint_timeout = 5min              # range 30s-1d
-max_wal_size = 1GB
-min_wal_size = 80MB
-#checkpoint_completion_target = 0.5     # checkpoint target duration, 0.0 - 1.0
+max_wal_size = {{ max_wal_size }}
+min_wal_size = {{ min_wal_size }}
+checkpoint_completion_target = {{ checkpoint_completion_target }}     # checkpoint target duration, 0.0 - 1.0
 #checkpoint_flush_after = 256kB         # measured in pages, 0 disables
 #checkpoint_warning = 30s               # 0 disables
 
@@ -231,7 +231,7 @@ min_wal_size = 80MB
 {% set true_list = ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True] %}
 {% if master in true_list %}
 archive_mode = on
-archive_command = 'cp %p /tmp/%f'
+archive_command = 'cp %p /tmp/backup_log/%f'
 archive_timeout = {{ archive_timeout }}
 {% endif %}
 #archive_mode = off             # enables archiving; off, on, or always
@@ -245,9 +245,9 @@ archive_timeout = {{ archive_timeout }}
 
 # - Archive Recovery -
 
+
 # These are only used in recovery mode.
 
-restore_command = 'cp /tmp/%f %p'
 #restore_command = ''           # command to use to restore an archived logfile segment
                                 # placeholders: %p = path of file to restore
                                 #               %f = file name only
@@ -372,7 +372,7 @@ restore_command = 'cp /tmp/%f %p'
 # - Planner Cost Constants -
 
 #seq_page_cost = 1.0                    # measured on an arbitrary scale
-#random_page_cost = 4.0                 # same scale as above
+random_page_cost = {{ random_page_cost }}                 # same scale as above
 #cpu_tuple_cost = 0.01                  # same scale as above
 #cpu_index_tuple_cost = 0.005           # same scale as above
 #cpu_operator_cost = 0.0025             # same scale as above
@@ -404,7 +404,7 @@ restore_command = 'cp /tmp/%f %p'
 
 # - Other Planner Options -
 
-#default_statistics_target = 100        # range 1-10000
+default_statistics_target = {{ default_statistics_target }}        # range 1-10000
 #constraint_exclusion = partition       # on, off, or partition
 #cursor_tuple_fraction = 0.1            # range 0.0-1.0
 #from_collapse_limit = 8
@@ -754,3 +754,4 @@ default_text_search_config = 'pg_catalog.english'
 #------------------------------------------------------------------------------
 
 # Add settings for extensions here
+{{ shared_preload_libraries_line }}

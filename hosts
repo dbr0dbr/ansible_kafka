@@ -1,6 +1,7 @@
 [all:vars]
 elastic_ip=1.1.1.1
 proxy_env={"http_prox" : "http://192.168.121.1:8888", "https_proxy" : "https://192.168.121.1:8888", "no_proxy" : ".atbmarket.com,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"}
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 [kafka]
 kafka-1	ansible_host=192.168.121.230 node_id=1
@@ -15,9 +16,26 @@ ha-2 ansible_host=192.168.122.66 interface=enp1s0
 virtual_ip=192.168.123.3/24
 
 [pg]
-pg-1   ansible_host=192.168.121.197  master=true
-#pg-2   ansible_host=192.168.121.176
+pg-1   ansible_host=192.168.121.213  master=true
+pg-2   ansible_host=192.168.121.120
 
+[pg:vars]
+max_connections = 100
+shared_buffers = 256MB
+effective_cache_size = 768MB
+maintenance_work_mem = 64MB
+checkpoint_completion_target = 0.7
+wal_buffers = 7864kB
+default_statistics_target = 100
+random_page_cost = 1.1
+effective_io_concurrency = 200
+work_mem = 2621kB
+min_wal_size = 1GB
+max_wal_size = 4GB
+max_worker_processes = 4
+max_parallel_workers_per_gather = 1
+max_parallel_workers = 4
+max_parallel_maintenance_workers = 1
 
 [redis]
 redis1   ansible_host=192.168.121.224
@@ -25,3 +43,6 @@ redis2   ansible_host=192.168.121.228
 redis3   ansible_host=192.168.121.211
 #cent8_dns   ansible_host=192.168.121.241
 #ubuntu14.04_dns   ansible_host=192.168.121.17
+
+[test]
+local   ansible_host=127.0.0.1

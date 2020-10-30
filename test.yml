@@ -1,0 +1,21 @@
+---
+- hosts: test
+  remote_user:
+    andc
+  vars:
+    ip: '192.168.121.1'
+  
+  tasks:
+  - name: Approve certs server directories
+    file:
+      state: directory
+      dest: '/tmp/dest/{{ item.path }}'
+    with_filetree: '/tmp/local/'
+    when: item.state == 'directory'
+
+  - name: Approve certs server files
+    template:
+      src: '{{ item.src }}'
+      dest: '/tmp/dest/{{ item.path }}'
+    with_filetree: '/tmp/local/'
+    when: item.state == 'file'

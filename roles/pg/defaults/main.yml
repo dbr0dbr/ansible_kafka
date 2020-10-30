@@ -9,3 +9,22 @@ ver: 12
 master: False
 archive_path: /tmp
 archive_timeout: 60
+
+shared_preload_libraries_line: shared_preload_libraries = 'pg_stat_statements'
+
+max_connections: 100
+shared_buffers: 128MB
+effective_cache_size: 3GB
+maintenance_work_mem: 64MB
+checkpoint_completion_target: 0.5
+wal_buffers: -1
+default_statistics_target: 100
+random_page_cost: 4.0
+effective_io_concurrency: 1
+work_mem: 4MB
+min_wal_size: 80MB
+max_wal_size: 1GB
+max_worker_processes: 8
+max_parallel_workers_per_gather: 2
+max_parallel_workers: 8
+max_parallel_maintenance_workers: 2
