@@ -16,7 +16,7 @@ ha-2 ansible_host=192.168.122.66 interface=enp1s0
 virtual_ip=192.168.123.3/24
 
 [pg]
-pg-1   ansible_host=192.168.121.213  master=true
+pg-1   ansible_host=192.168.121.193  master=true
 pg-2   ansible_host=192.168.121.120
 
 [pg:vars]
@@ -35,7 +35,7 @@ max_wal_size = 4GB
 max_worker_processes = 4
 max_parallel_workers_per_gather = 1
 max_parallel_workers = 4
-max_parallel_maintenance_workers = 1
+max_parallel_maintenance    #- reconfigure_workers = 1
 
 [redis]
 redis1   ansible_host=192.168.121.224

@@ -1,3 +1,4 @@
+
 - name: install PostgreSQL
   include_tasks: install_pg.yml
   tags:
@@ -6,18 +7,23 @@
 
 - name: backup PostgreSQL
   include_tasks: backuping_pg.yml
+  when: master in ok_list
   tags:
     - backup
-    #- reconfigure
     - never
 
-
+- name: Crate database and add test dataset
+  include_tasks: create_test_dataset.yml
+  when: master in ok_list
+  tags:
+    - testdb
+    - never
 
 - name: restore PostgreSQL backup 
   include_tasks: restore_pg.yml
+  when: master in ok_list  
   tags:
     - restore
-    #- reconfigure
     - never
 
 - name: set timezone to Europe/Kiev
