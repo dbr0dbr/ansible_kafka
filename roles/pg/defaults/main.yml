@@ -7,7 +7,9 @@ pgpassword: postgres
 reppassword: repuser
 ver: 12
 master: False
-archive_path: /tmp
+archive_path: /tmp/backup_log
+backup_path: /tmp/backup_base
+
 archive_timeout: 60
 
 shared_preload_libraries_line: shared_preload_libraries = 'pg_stat_statements'
@@ -28,3 +30,7 @@ max_worker_processes: 8
 max_parallel_workers_per_gather: 2
 max_parallel_workers: 8
 max_parallel_maintenance_workers: 2
+
+ok_list: ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
+pgdata: /var/lib/pgsql/12/data/
+recovery_target_time: '2020-10-28 21:56:18.849196+02'

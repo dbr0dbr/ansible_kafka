@@ -1,0 +1,49 @@
+
+- name: Stop PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+    enabled: yes
+  tags:
+    - restore
+
+- name: Clean a directory for backup
+  file:
+    path: '{{ pgdata }}/'
+    state: absent
+  tags:
+    - restore
+
+- name: copy files from last backup
+  shell:
+    cmd: cp -r {{ backup_path }}/last {{ pgdata }}
+    warn: false
+  become: true
+  become_user: postgres
+  tags:
+    - restore
+
+- name: copy files from last backup
+  shell:
+    cmd: echo -e "restore_command = 'cp {{ archive_path }}/%f %p'\nrecovery_target_time = '{{ recovery_target_time }}'" >> {{ pgdata }}/postgresql.auto.conf
+    warn: false
+  become: true
+  become_user: postgres
+  tags:
+    - restore
+
+- name: Enable end start PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: started
+    enabled: yes
+  tags:
+    - restore
+
+
+#chmod 0700 /var/lib/pgsql/12/data/
+#echo "restore_command = 'cp /tmp/backup_log/%f %p'" >> /var/lib/pgsql/12/data/postgresql.auto.conf
+#echo "recovery_target_timeline = '1'" >> /var/lib/pgsql/12/data/postgresql.auto.conf
+#echo "recovery_target_time = '2020-10-28 21:56:18.849196+02'" >> /var/lib/pgsql/12/data/postgresql.auto.conf
+#touch /var/lib/pgsql/12/data/recovery.signal
+#psql -d "testdb"  -c "SELECT COUNT(*) FROM large_test;"

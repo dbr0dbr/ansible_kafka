@@ -4,13 +4,21 @@
     - repl
     - reconfigure
 
-- name: configurate PostgreSQL backup 
-  include_tasks: backupin_pg.yml
+- name: backup PostgreSQL
+  include_tasks: backuping_pg.yml
   tags:
     - backup
     #- reconfigure
     - never
 
+
+
+- name: restore PostgreSQL backup 
+  include_tasks: restore_pg.yml
+  tags:
+    - restore
+    #- reconfigure
+    - never
 
 - name: set timezone to Europe/Kiev
   timezone:

@@ -231,7 +231,7 @@ checkpoint_completion_target = {{ checkpoint_completion_target }}     # checkpoi
 {% set true_list = ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True] %}
 {% if master in true_list %}
 archive_mode = on
-archive_command = 'cp %p /tmp/backup_log/%f'
+archive_command = 'cp %p {{ archive_path }}/%f'
 archive_timeout = {{ archive_timeout }}
 {% endif %}
 #archive_mode = off             # enables archiving; off, on, or always

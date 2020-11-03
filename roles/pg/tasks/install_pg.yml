@@ -48,7 +48,8 @@
     src: pg_hba.conf.j2
     dest: '/var/lib/pgsql/{{ ver }}/data/pg_hba.conf'
   notify:
-    - restart pgsql   
+    - restart pgsql
+  tags: reconfigure   
 
 - name: Open ports for pgsql
   firewalld:
@@ -57,7 +58,24 @@
     state: enabled
     immediate: yes
 
+- name: Create a directory for archive log if it does not exist
+  file:
+    path: '{{ archive_path }}'
+    state: directory
+    owner: 'postgres'
+    group: 'postgres'
+  tags:
+    - backup
 
+- name: Create a directory for backup if it does not exist
+  file:
+    path: '{{ backup_path }}/last'
+    state: directory
+    owner: 'postgres'
+    group: 'postgres'
+  tags:
+    - backup
+    
 - name: Restart PostgreSQL service
   systemd:
     name: postgresql-{{ ver }}
