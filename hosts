@@ -16,8 +16,8 @@ ha-2 ansible_host=192.168.122.66 interface=enp1s0
 virtual_ip=192.168.123.3/24
 
 [pg]
-pg-1   ansible_host=192.168.121.193  master=true
-pg-2   ansible_host=192.168.121.120
+pg-1   ansible_host=192.168.121.213  master=YES
+pg-2   ansible_host=192.168.121.182
 
 [pg:vars]
 max_connections = 100
@@ -46,3 +46,4 @@ redis3   ansible_host=192.168.121.211
 
 [test]
 local   ansible_host=127.0.0.1
+cent8_dns   ansible_host=192.168.121.241

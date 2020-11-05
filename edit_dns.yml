@@ -1,0 +1,88 @@
+---
+- hosts: test
+  remote_user:
+    root
+
+  vars:
+    conf_path: /etc/sysconfig/network-scripts
+    dns1: '192.168.122.1'
+    dns2: '1.1.1.1'
+    dns3: '8.8.4.4'
+    
+ 
+  tasks:
+  #Проверяем существование конфигов, пишем в stat_result
+  - name: Check that the interface config exists
+    stat:
+      path: '{{ conf_path }}/ifcfg-{{ item }}'
+    with_items: '{{ ansible_interfaces }}'
+    register: stat_result
+
+  #Ищем в существующих файлах DNS в начале строки, пути к ним берем в stat_result.results, регистрируем данные о файлах с DNS в dns_in_files
+  - name: Find dns in confs
+    lineinfile:
+      path: '{{ item.invocation.module_args.path }}'
+      state: present
+      regexp: '^(DNS|dns|Dns)(.+)$'
+      line: '='
+    check_mode: yes
+    when: item.stat.exists == True
+    with_items: '{{ stat_result.results }}'
+    register: dns_in_files
+
+  #Строим массив из путей к конфигам, которые нужно править
+  - set_fact: 
+      confs_for_edit: '{{confs_for_edit | default([]) + [item.item.stat.path]}}'
+    when: '"msg" in item and item.msg == "line replaced"'
+    with_items: '{{ dns_in_files.results }}'
+
+  #Если конфигов для правки нет, то завершаем задачу для хоста 
+  - meta: end_host
+    when: confs_for_edit is not defined
+  
+  #Удаляем строки с DNS, предварительно сделав бэкап
+  - name: Remove lines with DNS from confs
+    lineinfile:
+      path: '{{ item }}'
+      state: absent
+      regexp: '^(DNS|dns|Dns)(.+)$'
+      backup: yes
+    with_items: '{{ confs_for_edit }}'
+
+  - name: Add line with DNS1 to confs
+    lineinfile:
+      path: '{{ item }}'
+      state: present
+      line: DNS1={{ dns1 }}
+    with_items: '{{ confs_for_edit }}'
+
+  - name: Add line with DNS2 to confs
+    lineinfile:
+      path: '{{ item }}'
+      state: present
+      line: DNS2={{ dns2 }}
+    with_items: '{{ confs_for_edit }}'
+
+  - name: Add line with DNS3 to confs
+    lineinfile:
+      path: '{{ item }}'
+      state: present
+      line: DNS3={{ dns3 }}
+    with_items: '{{ confs_for_edit }}'
+
+  - name: Remove lines with DNS from resolv.conf
+    lineinfile:
+      path: '/etc/resolv.conf'
+      state: absent
+      regexp: '^nameserver(.+)$'
+
+  - name: Add line with DNS to resolv.conf
+    lineinfile:
+      path: '/etc/resolv.conf'
+      state: present
+      line: nameserver {{ item }}
+    with_items: 
+      - '{{ dns1 }}'
+      - '{{ dns2 }}'
+      - '{{ dns3 }}'
+  

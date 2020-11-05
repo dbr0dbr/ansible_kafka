@@ -3,7 +3,7 @@
     name: testdb
   become: true
   become_user: postgres
-  when: master in ok_list
+  when: master
   tags:
     - testdb
     - never

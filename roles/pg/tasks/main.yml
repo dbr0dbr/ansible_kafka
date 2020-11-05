@@ -1,3 +1,17 @@
+- name: set master
+  set_fact:
+    master: True
+  when: master is defined and master in ok_list
+  tags: always
+  
+- name: Set master_ip
+  set_fact:
+    master_ip: "{% for host in groups['pg'] %} {% if 'master' in hostvars[host] and hostvars[host]['master'] == True %} {{ hostvars[host]['ansible_default_ipv4']['address'] }} {% endif %} {% endfor %}"
+  tags: always
+
+
+- debug: var=master
+  when: master
 
 - name: install PostgreSQL
   include_tasks: install_pg.yml
@@ -7,23 +21,23 @@
 
 - name: backup PostgreSQL
   include_tasks: backuping_pg.yml
-  when: master in ok_list
+  when: master 
   tags:
     - backup
     - never
 
 - name: Crate database and add test dataset
   include_tasks: create_test_dataset.yml
-  when: master in ok_list
+  when: master 
   tags:
     - testdb
     - never
 
 - name: restore PostgreSQL backup 
   include_tasks: restore_pg.yml
-  when: master in ok_list  
   tags:
     - restore
+    - make_rw
     - never
 
 - name: set timezone to Europe/Kiev
@@ -39,7 +53,9 @@
     - never
 
 - name: Clean pg data
-  shell: yum -y remove postgres\*; rm -rf /var/lib/pgsql/12/data/*; rm -rf /usr/pgsql-12; 
+  shell: 
+    cmd: yum -y remove postgres\*; rm -rf {{ pgdata }}/*; rm -rf /usr/pgsql-{{ ver }}; rm -rf {{ backup_path }}; rm -rf {{ archive_path }}; rm -f /tmp/mypg.log
+    warn: false
   tags: 
     - clean
     - never

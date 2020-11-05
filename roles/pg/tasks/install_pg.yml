@@ -1,3 +1,4 @@
+- debug: var=pgdata
 - name: "Install repository package"
   yum: 
     state: present
@@ -9,7 +10,7 @@
     name: postgresql{{ ver }}-server
   environment: "{{ proxy_env }}"
 
-- name: install PostgreSQL
+- name: install PostgreSQL-contrib
   yum:
     name: postgresql{{ ver }}-contrib
   environment: "{{ proxy_env }}"
@@ -26,7 +27,7 @@
   when: ansible_distribution == 'CentOS' and (ansible_distribution_version | splitext)[0] == '8'
 
 - name: init db
-  shell: if [ ! -f /var/lib/pgsql/{{ ver }}/data/PG_VERSION ]; then /usr/pgsql-{{ ver }}/bin/postgresql-{{ ver }}-setup initdb; fi
+  shell: if [ ! -f {{ pgdata }}/PG_VERSION ]; then /usr/pgsql-{{ ver }}/bin/postgresql-{{ ver }}-setup initdb; fi
 
 - name: Enable end start PostgreSQL service
   systemd:
@@ -38,15 +39,16 @@
 - name: Template configuration file to postgresql.conf
   template:
     src: postgresql.conf.j2
-    dest: '/var/lib/pgsql/{{ ver }}/data/postgresql.conf'
+    dest: '{{ pgdata }}/postgresql.conf'
   notify:
     - restart pgsql
   tags: reconfigure
+  
 
 - name: Template configuration file to pg_hba.conf
   template:
     src: pg_hba.conf.j2
-    dest: '/var/lib/pgsql/{{ ver }}/data/pg_hba.conf'
+    dest: '{{ pgdata }}/pg_hba.conf'
   notify:
     - restart pgsql
   tags: reconfigure   
@@ -87,6 +89,7 @@
     db: postgres
     user: postgres
     password: '{{ pgpassword }}'
+  no_log: False  
   become_user: postgres
   become: yes
   tags: reconfigure
@@ -101,20 +104,26 @@
   become: yes
   tags: reconfigure
 
-- name: Set master_ip
-  set_fact:
-    master_ip: "{% for host in groups['pg'] %} {% if 'master' in hostvars[host] and hostvars[host]['master'] in [ 'yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True ] %} {{ hostvars[host]['ansible_default_ipv4']['address'] }} {% endif %} {% endfor %}"
-
 - name: Stop PostgreSQL service on replica
   systemd:
     name: postgresql-{{ ver }}
     state: stopped
-  when: master not in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
+  when: not master
   
-- name: copy data to replicas
-  shell: rm -rf /var/lib/pgsql/12/data/*; pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ master_ip }} --username repuser --pgdata=/var/lib/pgsql/12/data -C -S pgstandby_{{inventory_hostname | replace('-','_') }}
-  when: master not in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
+- name: copy data to replica
+  shell: 
+    cmd: rm -rf {{ pgdata }}/*; pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ master_ip }} --username repuser --pgdata={{ pgdata }} -C -S pgstandby_{{inventory_hostname | replace('-','_') }}
+    warn: false
+  when: not master 
   become_user: postgres
   become: yes
   environment:
       PGPASSWORD: '{{ reppassword }}'
+
+- name: CREATE EXTENSION pg_stat_statements
+  shell: psql -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;' 
+  when: master 
+  become_user: postgres
+  become: yes
+  tags: reconfigure
+

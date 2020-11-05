@@ -2,7 +2,7 @@ allow_ip:
   - 192.168.0.0/16
   - 10.0.0.0/8
   - 172.16.0.0/12
-
+  - 127.0.0.1/32
 pgpassword: postgres
 reppassword: repuser
 ver: 12
@@ -32,5 +32,5 @@ max_parallel_workers: 8
 max_parallel_maintenance_workers: 2
 
 ok_list: ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
-pgdata: /var/lib/pgsql/12/data/
-recovery_target_time: '2020-10-28 21:56:18.849196+02'
+pgdata: /var/lib/pgsql/{{ ver }}/data
+#recovery_target_time: '2020-10-28 21:56:18.849196+02'

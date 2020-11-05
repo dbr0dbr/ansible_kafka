@@ -1,0 +1,58 @@
+---
+- hosts: test
+  remote_user:
+    root
+  vars:
+    ip: '192.168.121.1'
+    conf_path: /etc/sysconfig/network-scripts
+  
+  tasks:
+  - debug: var=ansible_interfaces
+
+  - name: Check that the interface config exists
+    stat:
+      path: '{{ conf_path }}/ifcfg-{{ item }}'
+    with_items: '{{ ansible_interfaces }}'
+    register: stat_result
+  
+  - debug: var=stat_result.results[0]['item']
+  
+  - name: Backup configs
+    copy:
+      src: '{{ conf_path }}/ifcfg-{{ item.item }}'
+      dest: /tmp/iface
+      remote_src: yes
+    when: item.stat.exists == True
+    with_items: '{{ stat_result.results }}'
+    tags: never
+
+    
+  - name: Find dns in confs
+    lineinfile:
+      path: '{{ conf_path }}/ifcfg-{{ item.item }}'
+      state: present
+      regexp: '^DNS(.+)$'
+      line: 'DNS'
+    check_mode: yes
+    when: item.stat.exists == True
+    with_items: '{{ stat_result.results }}'
+    #changed_when: false
+    register: dns_in_files
+    ignore_errors: yes
+
+  - debug: var=dns_in_files
+  #- name: Create the file, if it doesnt exist already
+  #  file:
+  #    path: /etc/file.txt
+  #    state: touch
+  #  when: not stat_result.stat.exists
+  #- replace:
+  #    path: /tmp/ifcfg-eth0
+  #    regexp: '^DNS(.+)$'
+  #    replace: '#DNS\1'
+
+  #- name: Make sure group wheel is not in the sudoers configuration
+  #  lineinfile:
+  #    path: /tmp/ifcfg-eth1
+  #    state: absent
+  #    regexp: '^DNS(.+)$'

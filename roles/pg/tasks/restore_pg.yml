@@ -1,4 +1,6 @@
-
+- debug: var=master
+  when: not master
+  tags: restore
 - name: Stop PostgreSQL service
   systemd:
     name: postgresql-{{ ver }}
@@ -6,7 +8,7 @@
     enabled: yes
   tags:
     - restore
-
+  
 - name: Clean a directory for backup
   file:
     path: '{{ pgdata }}/'
@@ -20,6 +22,7 @@
     warn: false
   become: true
   become_user: postgres
+  when: master
   tags:
     - restore
 
@@ -29,17 +32,80 @@
     warn: false
   become: true
   become_user: postgres
+  when: master
   tags:
     - restore
 
-- name: Enable end start PostgreSQL service
+- name: Give insecure permissions to an existing file
+  file:
+    path: '{{ pgdata }}/recovery.signal'
+    owner: postgres
+    group: postgres
+    state: touch
+  when: master  
+  tags:
+    - restore
+
+- name: Enable end start PostgreSQL service on master
   systemd:
     name: postgresql-{{ ver }}
     state: started
     enabled: yes
+  when: master  
   tags:
     - restore
 
+- name: Create clean data directory on slave
+  file:
+    path: '{{ pgdata }}'
+    owner: postgres
+    group: postgres
+    state: directory
+    mode: '0700'
+  when: not master  
+  tags:
+    - restore
+
+- name: copy data to replica
+  shell: 
+    cmd: pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ master_ip }} --username repuser --pgdata={{ pgdata }} -C -S pgstandby_{{inventory_hostname | replace('-','_') }}
+    warn: false
+  when: not master 
+  become_user: postgres
+  become: yes
+  environment:
+      PGPASSWORD: '{{ reppassword }}'    
+  tags:
+    - restore
+
+- name: Enable end start PostgreSQL service on slave
+  systemd:
+    name: postgresql-{{ ver }}
+    state: started
+    enabled: yes
+  when: not master  
+  tags:
+    - restore
+
+- name: Remove recovery.signal and standby.signal
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - '{{ pgdata }}/recovery.signal'
+    - '{{ pgdata }}/standby.signal'
+  when: master
+  tags:
+    - make_rw
+
+- name: restart pgsql 
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: postgresql-{{ ver }}
+  when: master
+  tags:
+    - make_rw
 
 #chmod 0700 /var/lib/pgsql/12/data/
 #echo "restore_command = 'cp /tmp/backup_log/%f %p'" >> /var/lib/pgsql/12/data/postgresql.auto.conf
