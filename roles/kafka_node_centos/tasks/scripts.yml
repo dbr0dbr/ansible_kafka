@@ -83,6 +83,13 @@
   tags:
     - reconfigure
 
+- name: make script change_retention.ms.sh
+  template:
+    src: change_retention.ms.sh.j2
+    dest: '{{ scripts_dir }}/change_retention.ms.sh'
+  tags:
+    - reconfigure
+
 - name:  chmod +x
   file:
     path: '{{ scripts_dir }}'

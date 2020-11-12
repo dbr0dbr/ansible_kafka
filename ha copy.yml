@@ -1,6 +1,0 @@
----
-- hosts: ha
-  remote_user:
-    root
-  roles:
-   - ha
