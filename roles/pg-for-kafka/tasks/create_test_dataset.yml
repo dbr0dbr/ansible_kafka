@@ -1,0 +1,30 @@
+- name: Create db
+  postgresql_db:
+    name: testdb
+  become: true
+  become_user: postgres
+  tags:
+    - testdb
+    - never
+    
+- name: Copy script
+  copy:
+    src: add_data.sh
+    dest: /tmp/add_data.sh
+    owner: 'postgres'
+    group: 'postgres'
+    mode: '0744'
+  tags:
+    - testdb
+    - never
+    
+- name: Add data
+  shell:
+    cmd: /tmp/add_data.sh
+    warn: false
+  become: true
+  become_user: postgres
+  tags:
+    - testdb
+    - never
+    

@@ -1,0 +1,6 @@
+migrate 3-node to 6-node (done)
+change replication factor (done)
+change min ISR (done)
+rebalans partition
+test rack-id
+manual leader elction

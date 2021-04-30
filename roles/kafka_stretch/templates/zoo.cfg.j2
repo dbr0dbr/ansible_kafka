@@ -1,0 +1,63 @@
+
+# The number of milliseconds of each tick
+tickTime=2000
+# The number of ticks that the initial
+# synchronization phase can take
+initLimit=10
+# The number of ticks that can pass between
+# sending a request and getting an acknowledgement
+syncLimit=5
+# the directory where the snapshot is stored.
+# do not use /tmp for storage, /tmp here is just
+# example sakes.
+dataDir={{ zoo_data_dir }}
+# the port at which the clients will connect
+clientPort=2181
+# the maximum number of client connections.
+# increase this if you need to handle more clients
+#maxClientCnxns=60
+#
+# Be sure to read the maintenance section of the
+# administrator guide before turning on autopurge.
+#
+# http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_maintenance
+#
+# The number of snapshots to retain in dataDir=/opt/zookeeper/data
+#autopurge.snapRetainCount=3
+# Purge task interval in hours
+# Set to "0" to disable auto purge feature
+#autopurge.purgeInterval=1
+
+## Metrics Providers
+#
+# https://prometheus.io Metrics Exporter
+metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider
+metricsProvider.httpPort=7000
+metricsProvider.exportJvmInfo=true
+
+{% for host in groups['kafka_stretch'] %}
+server.{{hostvars[host]['node_id']}}={{hostvars[host]['ansible_host']}}:2888:3888
+{% endfor %}
+
+{% if 'kafka_dc1' in groups and 'kafka_dc2' in groups and groups['kafka_dc1']|length == groups['kafka_dc2']|length %}
+{% for host in groups['kafka_dc1'] %}
+group.{{loop.index}}={{hostvars[groups['kafka_dc1'][loop.index - 1]]['node_id']}}:{{hostvars[groups['kafka_dc2'][loop.index - 1]]['node_id']}}
+{% endfor %}
+#group.1=1:4 
+#group.2=2:5
+#group.3=3:6
+
+{% for host in groups['kafka_stretch'] %}
+{% if master_dc is defined and host in groups[master_dc] %}
+weight.{{hostvars[host]['node_id']}} = 2
+{% else %}
+weight.{{hostvars[host]['node_id']}} = 1
+{% endif %}
+{% endfor %}
+#weight.1 = 1 r1 
+#weight.2 = 1 r1
+#weight.3 = 1 r1
+#weight.4 = 1 r2 
+#weight.5 = 1 r2 
+#weight.6 = 1 r2
+{% endif %}

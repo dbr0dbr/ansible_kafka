@@ -1,0 +1,13 @@
+#!/bin/bash
+if [ -z $1 ]; then echo "usage: backup_all_topics.sh backup_dir" ; exit 1; fi
+backup_dir=$1
+kafka_log_dir={{ kafka_log_dir }}
+#Останавливаем кафку на одной ноде
+systemctl stop kafka
+sleep 5
+#Находим все папки с данными топиков и синхронизируем в $backup_dir
+for topic in `find $kafka_log_dir/* -type d |grep -v consumer_offsets`; do
+rsync -azv $topic $backup_dir
+done
+#Запускаем кафку
+systemctl start kafka

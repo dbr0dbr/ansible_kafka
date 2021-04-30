@@ -1,0 +1,32 @@
+---
+- name: stop service kafka
+  systemd:
+    state: stopped
+    daemon_reload: yes
+    name: kafka
+  tags:
+    - never
+    - clean
+
+- name: stop service zookeeper
+  systemd:
+    state: stopped
+    daemon_reload: yes
+    name: zookeeper
+  tags:
+    - never
+    - clean
+
+- name: Clean dirs
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - "{{ kafka_dir }}"
+    - "{{ kafka_log_dir }}"
+    - "{{ zoo_dir }}"
+    - "{{ zoo_data_dir }}"
+    - "{{ jmx_dir }}"
+  tags:
+    - never
+    - clean

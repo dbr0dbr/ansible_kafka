@@ -1,0 +1,82 @@
+- name: stop postgresql on disabled
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+  tags: reconfigure
+  when: disabled is defined and disabled in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
+  ignore_errors: yes
+
+- meta: end_host
+  when: disabled is defined and disabled in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
+
+- name: set master
+  set_fact:
+    master: "{% if master is defined and master in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]%}True{% else %}False{% endif %}"
+  tags: always
+
+- name: calc masters
+  set_fact: 
+    masters_num: "{% for host in groups['pg_cluster'] %}{% if 'master' in hostvars[host] and hostvars[host]['master'] == True %}1{% endif %}{% endfor %}"
+
+- name: stop with error
+  fail:
+    msg: "Multiple or not master set! Must be one master in inventory"
+  when: masters_num != '1'
+
+- name: install PostgreSQL
+  include_tasks: install_pg.yml
+  tags:
+    - repl
+    - reconfigure
+#    - never
+
+- name: config replication
+  include_tasks: config_replication.yml
+  tags:
+    - repl
+    - reconfigure
+
+- name: backup PostgreSQL
+  include_tasks: backuping_pg.yml
+  when: master 
+  tags:
+    - backup
+    - never
+
+- name: Crate database and add test dataset
+  include_tasks: create_test_dataset.yml
+  when: master 
+  tags:
+    - testdb
+    - never
+
+- name: restore PostgreSQL backup 
+  include_tasks: restore_pg.yml
+  tags:
+    - restore
+    - make_rw
+    - never
+
+- name: set timezone to Europe/Kiev
+  timezone:
+    name: Europe/Kiev
+
+- name: Stop PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+  tags:
+    - clean
+    - never
+
+- name: Clean pg data
+  shell: 
+    cmd: yum -y remove postgres\*; rm -rf {{ pgdata }}/*; rm -rf /usr/pgsql-{{ ver }}; rm -rf {{ backup_path }}; rm -rf {{ archive_path }}; rm -f /tmp/mypg.log
+    warn: false
+  tags: 
+    - clean
+    - never
+
+
+
+#

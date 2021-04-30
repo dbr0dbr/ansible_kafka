@@ -1,0 +1,81 @@
+---
+- name: Clean kafka dirs
+  include_tasks: clean.yml
+  tags:
+    - never
+    - clean
+
+- name: Clean kafka data dirs
+  include_tasks: clean-data.yml
+  tags:
+    - never
+    - clean-data
+
+#- name: test pervius installation
+#  include_tasks: is_isnstalled.yml
+
+- name: install java
+  yum:
+    name: "{{ packages }}"
+  environment: "{{ proxy_env }}"
+  vars:
+    packages:
+    - java-1.8.0-openjdk 
+    - java-1.8.0-openjdk-devel
+
+- name: Create kafka group
+  group:
+    name: '{{ kafka_group }}'
+    state: present
+
+- name: Create kafka user
+  user:
+    name: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    state: present
+    createhome: yes
+
+- name: install zookeeper
+  include_tasks: zoo.yml
+  tags:
+    - reconfigure
+  
+- name: install kafka
+  include_tasks: kafka.yml
+  tags:
+    - reconfigure
+    - change
+    
+- name: Create a scripts directory if it does not exist
+  file:
+    path: '{{ scripts_dir }}'
+    state: directory
+
+- name: create scripts
+  template:
+    src: '{{ item }}'
+    dest: /{{ scripts_dir }}/{{ item | basename | regex_replace('\.j2','') }}
+  with_fileglob:
+    - templates/scripts/*.j2
+  tags:
+    - reconfigure
+
+- name: restart service zookeeper
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: zookeeper
+  tags:
+    - restart
+    - never
+  throttle: 1
+
+- name: restart service kafka
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: kafka
+  tags:
+    - restart
+    - never
+  throttle: 1

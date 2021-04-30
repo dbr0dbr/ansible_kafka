@@ -1,0 +1,118 @@
+---
+- name: test kafka_distr_dir
+  stat: path="{{ kafka_root_dir }}/{{ kafka_distr_name }}"
+  register: kafka_distr_dir
+
+- name: Unpack Apache kafka
+  unarchive:
+    src: '{{ kafka_distr }}'
+    dest: '{{ kafka_root_dir }}'
+    exclude:
+      - '{{ kafka_distr_name }}/config/server.properties'
+    copy: yes
+  when: not kafka_distr_dir.stat.isdir
+
+- name: Create a symbolic link
+  file:
+    src: "{{ kafka_root_dir }}/{{ kafka_distr_name }}"
+    dest: "{{ kafka_dir }}"
+    owner: kafka
+    group: kafka
+    state: link
+
+- name: Template configuration file to server.properties
+  template:
+    src: server.properties.j2
+    dest: '{{ kafka_dir }}/config/server.properties'
+    owner: kafka
+    group: kafka
+  tags:
+    - reconfigure
+  notify:
+    - restart kafka service   
+
+- name: Create a jmx-explorer directory if it does not exist
+  file:
+    path: '{{ jmx_dir }}'
+    state: directory
+
+- name: Copy jmx-explorer
+  copy:
+    src: jmx-exporter.jar
+    dest: "{{ jmx_dir }}/jmx-exporter.jar"
+
+- name: Copy kafka temple for jmx-explorer
+  copy:
+    src: kafka.yml
+    dest: "{{ jmx_dir }}/kafka.yml"
+
+
+- name: Recursively change ownership of a kafka directory
+  file:
+    path: '{{ kafka_root_dir }}'
+    state: directory
+    recurse: yes
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+  tags:
+    - reconfigure
+
+- name: Recursively change permissions of a kafka directory
+  file:
+    path: '{{ kafka_root_dir }}'
+    state: directory
+    mode: '0755'
+  tags:
+    - reconfigure
+
+- name: Open ports for kafka
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    - 9092
+    - 2181
+    - 2888
+    - 3888
+    - 7071
+
+- name: Template configuration file to kafka.service
+  template:
+    src: kafka.service.j2
+    dest: '/etc/systemd/system/kafka.service'
+  tags:
+    - reconfigure
+  notify:
+    - restart kafka service   
+
+- name: enable and start kafka.service
+  systemd:
+    name: kafka
+    state: started
+    enabled: yes
+
+- name: change loglevel for connect-log4j.properties
+  replace:
+    path: '{{ kafka_dir }}/config/connect-log4j.properties'
+    regexp: INFO
+    replace: WARN
+  tags: 
+    - reconfigure
+
+- name: change loglevel for log4j.properties
+  replace:
+    path: '{{ kafka_dir }}/config/log4j.properties'
+    regexp: INFO
+    replace: WARN
+  tags: 
+    - reconfigure
+
+- name: adding existing user "zabbix" to group "kafka"
+  user:
+    name: zabbix
+    groups: kafka
+    append: yes
+  tags:
+    - reconfigure

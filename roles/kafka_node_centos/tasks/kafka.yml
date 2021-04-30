@@ -72,6 +72,7 @@
     - 2888
     - 3888
     - 7071
+    - 9989
 
 - name: Template configuration file to kafka.service
   template:

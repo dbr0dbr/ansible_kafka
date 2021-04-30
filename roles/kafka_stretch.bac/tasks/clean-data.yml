@@ -1,0 +1,60 @@
+---
+- name: stop service kafka
+  systemd:
+    state: stopped
+    daemon_reload: yes
+    name: kafka
+  tags:
+    - never
+    - clean-data
+
+- name: stop service zookeeper
+  systemd:
+    state: stopped
+    daemon_reload: yes
+    name: zookeeper
+  tags:
+    - never
+    - clean-data
+
+- name: -clean-data dirs
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - "{{ kafka_log_dir }}"
+    - "{{ zoo_data_dir }}"
+  tags:
+    - never
+    - clean-data
+
+- name: Create a zookeeper data directory if it does not exist
+  file:
+    path: '{{ zoo_data_dir }}'
+    state: directory
+  tags:
+    - clean-data
+
+- name: Create id file
+  shell: "echo '{{ node_id }}' > {{ zoo_data_dir }}/myid"
+  tags:
+    - clean-data
+
+
+- name: start service kafka
+  systemd:
+    state: started
+    daemon_reload: yes
+    name: kafka
+  tags:
+    - never
+    - clean-data
+
+- name: start service zookeeper
+  systemd:
+    state: started
+    daemon_reload: yes
+    name: zookeeper
+  tags:
+    - never
+    - clean-data

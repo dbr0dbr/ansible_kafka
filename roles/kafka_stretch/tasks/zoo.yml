@@ -1,0 +1,82 @@
+---
+- name: test zoo_distr_dir
+  stat: path={{ zoo_root_dir }}/{{ zoo_distr_name }}
+  register: zoo_distr_dir
+
+- name: Unpack Apache zookeeper
+  unarchive:
+    src: '{{ zoo_distr }}'
+    dest: '{{ zoo_root_dir }}'
+    copy: yes
+  when: zoo_distr_dir.stat.isdir is undefined or (not zoo_distr_dir.stat.isdir)
+  
+- name: Create a symbolic link
+  file:
+    src: "{{ zoo_root_dir }}/{{ zoo_distr_name }}"
+    dest: "{{ zoo_dir }}"
+    owner: kafka
+    group: kafka
+    state: link
+
+- name: Create a zookeeper data directory if it does not exist
+  file:
+    path: '{{ zoo_data_dir }}'
+    state: directory
+
+- name: Template configuration file to zoo.cfg
+  template:
+    src: zoo.cfg.j2
+    dest: '{{ zoo_dir }}/conf/zoo.cfg'
+  tags:
+    - reconfigure
+  notify:
+    - restart zookeeper service 
+    - restart kafka service
+    
+- name: Create id file
+  shell: "echo '{{ node_id }}' > {{ zoo_data_dir }}/myid"
+  tags:
+    - reconfigure
+
+- name: Recursively change ownership of a zookeeper directory
+  file:
+    path: '{{ zoo_dir }}'
+    state: directory
+    recurse: yes
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+  tags:
+    - reconfigure
+
+- name: Recursively change ownership of a zookeeper data directory
+  file:
+    path: '{{ zoo_data_dir }}'
+    state: directory
+    recurse: yes
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+  tags:
+    - reconfigure
+
+- name: Open port for zookeeper
+  firewalld:
+    port: 7000/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Template configuration file to zookeeper.service
+  template:
+    src: zookeeper.service.j2
+    dest: '/etc/systemd/system/zookeeper.service'
+  tags:
+    - reconfigure
+  notify:
+    - restart zookeeper service 
+
+- name: enable and start zookeeper.service
+  systemd:
+    name: zookeeper
+    state: started
+    enabled: yes
+

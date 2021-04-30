@@ -1,0 +1,113 @@
+- name: "Install repository package"
+  yum: 
+    state: present
+    pkg: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ (ansible_distribution_version | splitext)[0] }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+  environment: "{{ proxy_env }}"
+  
+- name: install PostgreSQL
+  yum:
+    name: postgresql{{ ver }}-server
+  environment: "{{ proxy_env }}"
+
+- name: install PostgreSQL-contrib
+  yum:
+    name: postgresql{{ ver }}-contrib
+  environment: "{{ proxy_env }}"
+  tags: 
+    - reconfigure
+
+- name: install psycopg2
+  yum:
+    name: python-psycopg2
+  environment: "{{ proxy_env }}"
+
+- name: disable build-in module for centos 8
+  shell: dnf -qy module disable postgresql
+  when: ansible_distribution == 'CentOS' and (ansible_distribution_version | splitext)[0] == '8'
+
+- name: init db
+  shell: if [ ! -f {{ pgdata }}/PG_VERSION ]; then /usr/pgsql-{{ ver }}/bin/postgresql-{{ ver }}-setup initdb; fi
+  
+
+- name: Enable end start PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: started
+    enabled: yes
+  
+- name: Template configuration file to postgresql.conf
+  template:
+    src: postgresql.conf.j2
+    dest: '{{ pgdata }}/postgresql.conf'
+  notify:
+    - restart pgsql
+  tags: reconfigure
+  register: postgresql
+
+- name: Template configuration file to pg_hba.conf
+  template:
+    src: pg_hba.conf.j2
+    dest: '{{ pgdata }}/pg_hba.conf'
+  notify:
+    - restart pgsql
+  tags: reconfigure   
+  register: pg_hba
+
+- name: Open ports for pgsql
+  firewalld:
+    port: "5432/tcp"
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Create a directory for archive log if it does not exist
+  file:
+    path: '{{ archive_path }}'
+    state: directory
+    owner: 'postgres'
+    group: 'postgres'
+  tags:
+    - backup
+
+- name: Create a directory for backup if it does not exist
+  file:
+    path: '{{ backup_path }}/last'
+    state: directory
+    owner: 'postgres'
+    group: 'postgres'
+  tags:
+    - backup
+    
+- name: Restart PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: restarted
+  tags: reconfigure
+  when: postgresql.changed or pg_hba.changed
+
+- name: set password for postgres
+  postgresql_user:
+    db: postgres
+    user: postgres
+    password: '{{ pgpassword }}'
+  no_log: False  
+  become_user: postgres
+  become: yes
+  tags: reconfigure
+
+- name: set password for postgres
+  postgresql_user:
+    db: postgres
+    user: repuser
+    password: '{{ reppassword }}'
+    role_attr_flags: REPLICATION
+  become_user: postgres
+  become: yes
+  tags: reconfigure
+
+- name: CREATE EXTENSION 
+  shell: psql -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;' 
+  when: master 
+  become_user: postgres
+  become: yes
+  tags: reconfigure

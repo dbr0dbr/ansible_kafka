@@ -1,4 +1,3 @@
-- debug: var=pgdata
 - name: "Install repository package"
   yum: 
     state: present
@@ -120,7 +119,7 @@
   environment:
       PGPASSWORD: '{{ reppassword }}'
 
-- name: CREATE EXTENSION pg_stat_statements
+- name: CREATE EXTENSION cd 
   shell: psql -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;' 
   when: master 
   become_user: postgres

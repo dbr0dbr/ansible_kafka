@@ -1,0 +1,7 @@
+---
+- hosts: kafka_stretch
+  remote_user:
+    root
+  roles:
+   - kafka_stretch
+  

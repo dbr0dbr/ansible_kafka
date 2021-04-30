@@ -1,0 +1,79 @@
+---
+- name: set arbiter
+  set_fact:
+    arbiter: True
+  when: arbiter is defined and arbiter in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
+  tags: always
+
+- name: Clean kafka dirs
+  include_tasks: clean.yml
+  tags:
+    - never
+    - clean
+
+- name: Clean kafka data dirs
+  include_tasks: clean-data.yml
+  tags:
+    - never
+    - clean-data
+
+#- name: test pervius installation
+#  include_tasks: is_isnstalled.yml
+
+- name: install java
+  yum:
+    name: "{{ packages }}"
+  environment: "{{ proxy_env }}"
+  vars:
+    packages:
+    - java-1.8.0-openjdk 
+    - java-1.8.0-openjdk-devel
+
+- name: Create kafka group
+  group:
+    name: '{{ kafka_group }}'
+    state: present
+
+- name: Create kafka user
+  user:
+    name: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    state: present
+    createhome: yes
+
+- name: install zookeeper
+  include_tasks: zoo.yml
+  tags:
+    - reconfigure
+  
+- name: install kafka
+  include_tasks: kafka.yml
+  tags:
+    - reconfigure
+    - change
+  when: not arbiter
+
+- name: generate scripts
+  include_tasks: scripts.yml
+  tags:
+    - reconfigure
+  when: not arbiter
+
+- name: restart service zookeeper
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: zookeeper
+  tags:
+    - restart
+    - never
+
+- name: restart service kafka
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: kafka
+  tags:
+    - restart
+    - never
+  when: not arbiter

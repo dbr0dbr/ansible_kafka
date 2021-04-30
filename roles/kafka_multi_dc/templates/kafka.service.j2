@@ -1,0 +1,17 @@
+[Unit]
+Requires=zookeeper.service
+After=zookeeper.service
+
+[Service]
+Type=simple
+User=kafka
+Environment=KAFKA_GC_LOG_OPTS=-Dnogclog 
+Environment=KAFKA_HEAP_OPTS=-Xmx1000M -Xms1000M
+Environment=KAFKA_OPTS=-javaagent:{{ jmx_dir }}/jmx-exporter.jar=7071:{{ jmx_dir }}/kafka.yml
+ExecStart=/bin/sh -c '{{ kafka_dir }}/bin/kafka-server-start.sh {{ kafka_dir }}/config/server.properties > {{ kafka_dir }}/kafka.log 2>&1'
+ExecStop={{ kafka_dir }}/bin/kafka-server-stop.sh
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target
+

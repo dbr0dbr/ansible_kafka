@@ -1,0 +1,31 @@
+- name: install PostgreSQL
+  include_tasks: install_pg.yml
+  tags:
+    - repl
+    - reconfigure
+
+- name: Crate database and add test dataset
+  include_tasks: create_test_dataset.yml
+  tags:
+    - testdb
+    - never
+
+- name: set timezone to Europe/Kiev
+  timezone:
+    name: Europe/Kiev
+
+- name: Stop PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+  tags:
+    - clean
+    - never
+
+- name: Clean pg data
+  shell: 
+    cmd: yum -y remove postgres\*; rm -rf {{ pgdata }}/*; rm -rf /usr/pgsql-{{ ver }}; rm -f /tmp/mypg.log
+    warn: false
+  tags: 
+    - clean
+    - never

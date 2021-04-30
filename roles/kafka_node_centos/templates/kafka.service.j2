@@ -5,6 +5,7 @@ After=zookeeper.service
 [Service]
 Type=simple
 User=kafka
+Environment=JMX_PORT=9989
 Environment=KAFKA_GC_LOG_OPTS=-Dnogclog 
 Environment=KAFKA_HEAP_OPTS=-Xmx1000M -Xms1000M
 Environment=KAFKA_OPTS=-javaagent:{{ jmx_dir }}/jmx-exporter.jar=7071:{{ jmx_dir }}/kafka.yml

@@ -1,0 +1,38 @@
+#!/bin/bash
+ids={% for host in groups['kafka_stretch'] %}{{ hostvars[host]['node_id'] }}{% if not loop.last %},{% endif %}{% endfor %}
+
+jsonfile=/tmp/increase-replication-factor.json
+repl_factor_default={{ groups['kafka_stretch'] | length }}
+IFS=$'\n'
+for info_line in `{{ kafka_dir }}/bin/kafka-topics.sh --describe --zookeeper 127.0.01:2181 |grep ReplicationFactor`; do
+  topicname=`echo $info_line| awk '{print $2}'`
+  repl_factor=`echo $info_line |awk -F 'ReplicationFactor: ' '{print $2}' |awk '{print $1}'`
+  if [ $repl_factor == $repl_factor_default ]; then continue; fi
+  partitions=`{{ kafka_dir }}/bin/kafka-topics.sh --describe --zookeeper 127.0.01:2181 --topic $topicname |grep "PartitionCount: " |sed s/.*"PartitionCount: "//g |awk '{print $1}'`
+  echo "$topicname $partitions"
+  echo "{\"version\":1," > $jsonfile
+  echo "  \"partitions\":[" >> $jsonfile
+  for ((i=0; i < $partitions; i++)); do
+   if [ $(($partitions - 1)) != $i ]; then 
+      echo "     {\"topic\":\"$topicname\",\"partition\":$i,\"replicas\":[$ids]}," >> $jsonfile
+    else
+      echo "     {\"topic\":\"$topicname\",\"partition\":$i,\"replicas\":[$ids]}" >> $jsonfile
+    fi
+    ids=${ids:2},${ids:0:1}
+  done
+  echo "]}" >> $jsonfile
+
+  function reassign-partition {
+  result=`{{ kafka_dir }}/bin/kafka-reassign-partitions.sh --zookeeper localhost:2181 --reassignment-json-file /tmp/increase-replication-factor.json --execute`
+  if `echo "$result" |grep "Successfully started reassignment" > /dev/null`; then 
+    echo "ok"
+  else
+    sleep 10
+    echo "waiting ..."
+    reassign-partition
+  fi
+  }
+
+  reassign-partition
+done
+

@@ -1,0 +1,8 @@
+---
+- hosts: pg-for-kafka
+  remote_user:
+    root
+  roles:
+   - pg-for-kafka
+  
+#tags: reconfigure; clean; backup;

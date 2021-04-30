@@ -1,0 +1,131 @@
+#select pg_drop_replication_slot('bottledwater');
+#select slot_name from pg_replication_slots;
+
+- name: get replication slots
+  shell: 
+    cmd: psql -c "select slot_name from pg_replication_slots;"
+    warn: false
+  become_user: postgres
+  become: yes
+  register: current_replication_slots
+  changed_when: False
+
+- name: set current_replication_slots_list
+  set_fact:
+    current_replication_slots_list: "{{current_replication_slots['stdout_lines'][2:-1] | replace(' ','')}}"
+
+- name: set inventory_replication_slots_list
+  set_fact:
+    inventory_replication_slots_list: "{% set inventory_replication_slots=[]%}{% for host in groups['pg_cluster'] %}{% if 'my_master' in hostvars[host] and hostvars[host]['my_master'] == inventory_hostname %}{%set slot='pgstandby_'+host | replace('-','_') %}{{inventory_replication_slots.append(slot)}}{%endif%}{%endfor%}{{inventory_replication_slots}}"
+
+
+- debug: var=current_replication_slots_list
+- debug: var=inventory_replication_slots_list
+#- meta: end_play
+#pgstandby_{{  | replace('-','_') }}
+
+- name: get sender host for node
+  shell: 
+    cmd: psql -c "select sender_host from pg_stat_wal_receiver;"
+    warn: false
+  become_user: postgres
+  become: yes
+  register: sender_host
+  changed_when: False
+
+
+#- name: stop with error
+#  fail:
+#    msg: "not all nodes work"
+#  when: sender_host.failed
+
+- name: set my_curren_master_ip
+  set_fact:
+    my_curren_master_ip: "{{sender_host['stdout_lines'][2] | replace(' ','') | replace('(0строк)','')  }}"
+
+- name: set in_sync on l1 replica
+  set_fact:
+    in_sync: "{% if hostvars[my_master]['ansible_default_ipv4']['address'] == my_curren_master_ip %}True{%else%}False{%endif%}"
+  when: not master
+
+- name: set in_sync on l2 replica
+  set_fact:
+    in_sync: "{% if hostvars[my_master]['in_sync'] and hostvars[my_master]['ansible_default_ipv4']['address'] == my_curren_master_ip %}True{%else%}False{%endif%}"
+  when: not master and not hostvars[my_master]['master']
+
+- name: Stop PostgreSQL service on l1 replica
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+  when: not master and (not in_sync or hostvars[my_master]['in_sync'] is defined and not hostvars[my_master]['in_sync'])
+
+- name: remove old replication slots
+  shell: 
+    cmd: psql -c "select pg_drop_replication_slot('{{ item }}');"
+    warn: false
+  become_user: postgres
+  become: yes
+  register: current_replication_slots
+  changed_when: False
+  with_items: "{{current_replication_slots_list}}"
+  when: item not in inventory_replication_slots_list
+ 
+- name: Up slave to master
+  shell: 
+    cmd: /usr/pgsql-12/bin/pg_ctl  promote -D {{ pgdata }}
+    warn: false
+  tags: 
+    - failover
+  become_user: postgres
+  become: yes
+  when: master and my_curren_master_ip !=  ''
+  
+- name: configure l1 replica
+  block:
+  - name: Stop PostgreSQL service on l1 replica
+    systemd:
+      name: postgresql-{{ ver }}
+      state: stopped
+
+  - name: copy data to l1 replica
+    shell: 
+      cmd: rm -rf {{ pgdata }}/*; pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ hostvars[my_master]['ansible_default_ipv4']['address'] }} --username repuser --pgdata={{ pgdata }} -C -S pgstandby_{{inventory_hostname | replace('-','_') }}
+      warn: false
+    become_user: postgres
+    become: yes
+    environment:
+        PGPASSWORD: '{{ reppassword }}'
+  
+  - name: Sart PostgreSQL service on l1 replica
+    systemd:
+      name: postgresql-{{ ver }}
+      state: started
+  when: not master and hostvars[my_master]['master'] and not in_sync
+  throttle: 1
+
+- name: configure l2 replica
+  block:
+  - name: Stop PostgreSQL service on l2 replica
+    systemd:
+      name: postgresql-{{ ver }}
+      state: stopped
+
+  - name: copy data to l2 replica
+    shell: 
+      cmd: rm -rf {{ pgdata }}/*; pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ hostvars[my_master]['ansible_default_ipv4']['address'] }} --username repuser --pgdata={{ pgdata }} -C -S pgstandby_{{inventory_hostname | replace('-','_') }}
+      warn: false
+    become_user: postgres
+    become: yes
+    environment:
+        PGPASSWORD: '{{ reppassword }}'
+  
+  - name: Sart PostgreSQL service on l2 replica
+    systemd:
+      name: postgresql-{{ ver }}
+      state: started
+  when: not master and (not in_sync or hostvars[my_master]['in_sync'] is defined and not hostvars[my_master]['in_sync'])
+  throttle: 1
+
+- debug: var=my_curren_master_ip
+- debug: var=hostvars[my_master]['ansible_default_ipv4']['address']
+- debug: var=in_sync

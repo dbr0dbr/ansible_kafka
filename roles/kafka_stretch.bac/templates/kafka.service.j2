@@ -1,0 +1,20 @@
+[Unit]
+Requires=zookeeper.service
+After=zookeeper.service
+
+[Service]
+Type=simple
+User=kafka
+Environment=JMX_PORT=9989
+Environment=KAFKA_GC_LOG_OPTS=-Dnogclog 
+Environment=KAFKA_HEAP_OPTS=-Xmx1000M -Xms1000M
+Environment=KAFKA_OPTS=-javaagent:{{ jmx_dir }}/jmx-exporter.jar=7071:{{ jmx_dir }}/kafka.yml
+##Environment=KAFKA_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname={{ ansible_host }} -Djava.net.preferIPv4Stack=true"
+Environment="KAFKA_JMX_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9989 -Dcom.sun.management.jmxremote.authenticate=false -Djava.rmi.server.hostname={{ ansible_host }}"
+ExecStart=/bin/sh -c '{{ kafka_dir }}/bin/kafka-server-start.sh {{ kafka_dir }}/config/server.properties > {{ kafka_dir }}/kafka.log 2>&1'
+ExecStop={{ kafka_dir }}/bin/kafka-server-stop.sh
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target
+

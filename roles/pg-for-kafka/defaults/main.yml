@@ -1,0 +1,28 @@
+allow_ip:
+  - 192.168.0.0/16
+  - 10.0.0.0/8
+  - 172.16.0.0/12
+  - 127.0.0.1/32
+pgpassword: postgres
+reppassword: repuser
+ver: 12
+
+max_connections: 100
+shared_buffers: 128MB
+effective_cache_size: 3GB
+maintenance_work_mem: 64MB
+checkpoint_completion_target: 0.5
+wal_buffers: -1
+default_statistics_target: 100
+random_page_cost: 4.0
+effective_io_concurrency: 1
+work_mem: 4MB
+min_wal_size: 80MB
+max_wal_size: 1GB
+max_worker_processes: 8
+max_parallel_workers_per_gather: 2
+max_parallel_workers: 8
+max_parallel_maintenance_workers: 2
+
+pgdata: /var/lib/pgsql/{{ ver }}/data
+replica_ip: 127.0.0.1/32

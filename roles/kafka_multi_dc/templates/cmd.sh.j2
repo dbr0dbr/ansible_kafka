@@ -1,0 +1,16 @@
+/home/kafka/kafka/bin/kafka-topics.sh \
+  --zookeeper 127.0.0.1:2181 \
+  --create \
+  --topic test \
+  --partitions 2 --replication-factor 6
+
+/home/kafka/kafka/bin/kafka-producer-perf-test.sh \
+  --topic test \
+  --num-records 50000000 \
+  --record-size 100 \
+  --throughput -1 \
+  --producer-props acks=1 \
+  bootstrap.servers=127.0.0.1:9092 \
+  buffer.memory=67108864 \
+  batch.size=8196
+ 

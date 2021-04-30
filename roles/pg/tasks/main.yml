@@ -3,7 +3,7 @@
     master: True
   when: master is defined and master in ok_list
   tags: always
-  
+
 - name: Set master_ip
   set_fact:
     master_ip: "{% for host in groups['pg'] %} {% if 'master' in hostvars[host] and hostvars[host]['master'] == True %} {{ hostvars[host]['ansible_default_ipv4']['address'] }} {% endif %} {% endfor %}"

@@ -1,0 +1,7 @@
+---
+- hosts: kafka-multi-dc
+  remote_user:
+    root
+  roles:
+   - kafka_multi_dc
+  

@@ -1,0 +1,5 @@
+#!/bin/bash
+if [ -z $2 ]; then echo "usage: change_retention.ms.sh topic_name retention_in_ms" ; exit 1; fi
+topicname=$1
+ms=$2
+/home/kafka/kafka/bin/kafka-configs.sh --bootstrap-server 127.0.0.1:9092  --entity-type topics --entity-name $topicname --alter --add-config retention.ms=$ms

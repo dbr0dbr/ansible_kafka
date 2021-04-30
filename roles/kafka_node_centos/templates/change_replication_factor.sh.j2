@@ -1,16 +1,37 @@
 #!/bin/bash
-if [ -z $1 ]; then echo "usage: change_replication)factor.sh topic_name" ; exit 1; fi
 ids={% for host in groups['kafka'] %}{{ hostvars[host]['node_id'] }}{% if not loop.last %},{% endif %}{% endfor %}
 
-topicname=$1
-{{ kafka_dir }}/bin/kafka-topics.sh --describe --zookeeper 127.0.01:2181 --topic $topicname
+jsonfile=/tmp/increase-replication-factor.json
+repl_factor_default={{ groups['kafka'] | length }}
+IFS=$'\n'
+for info_line in `{{ kafka_dir }}/bin/kafka-topics.sh --describe --zookeeper 127.0.01:2181 |grep ReplicationFactor`; do
+  topicname=`echo $info_line| awk '{print $2}'`
+  repl_factor=`echo $info_line |awk -F 'ReplicationFactor: ' '{print $2}' |awk '{print $1}'`
+  if [ $repl_factor == $repl_factor_default ]; then continue; fi
+  partitions=`{{ kafka_dir }}/bin/kafka-topics.sh --describe --zookeeper 127.0.01:2181 --topic $topicname |grep "PartitionCount: " |sed s/.*"PartitionCount: "//g |awk '{print $1}'`
+  echo "$topicname $partitions"
+  echo "{\"version\":1," > $jsonfile
+  echo "  \"partitions\":[" >> $jsonfile
+  for ((i=0; i < $partitions; i++)); do
+   if [ $(($partitions - 1)) != $i ]; then 
+      echo "     {\"topic\":\"$topicname\",\"partition\":$i,\"replicas\":[$ids]}," >> $jsonfile
+    else
+      echo "     {\"topic\":\"$topicname\",\"partition\":$i,\"replicas\":[$ids]}" >> $jsonfile
+    fi
+  done
+  echo "]}" >> $jsonfile
 
-cat <<EOF> /tmp/increase-replication-factor.json
-{"version":1,
-  "partitions":[
-     {"topic":"$topicname","partition":0,"replicas":[$ids]}
-]}
-EOF
+  function reassign-partition {
+  result=`{{ kafka_dir }}/bin/kafka-reassign-partitions.sh --zookeeper localhost:2181 --reassignment-json-file /tmp/increase-replication-factor.json --execute`
+  if `echo "$result" |grep "Successfully started reassignment" > /dev/null`; then 
+    echo "ok"
+  else
+    sleep 10
+    echo "waiting ..."
+    reassign-partition
+  fi
+  }
 
-{{ kafka_dir }}/bin/kafka-reassign-partitions.sh --zookeeper localhost:2181 --reassignment-json-file /tmp/increase-replication-factor.json --execute
-{{ kafka_dir }}/bin/kafka-topics.sh --describe --zookeeper 127.0.01:2181 --topic $topicname
+  reassign-partition
+done
+

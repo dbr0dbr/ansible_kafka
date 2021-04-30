@@ -1,0 +1,5 @@
+wget http://apache-mirror.rbc.ru/pub/apache/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1-bin.tar.gz
+wget https://downloads.apache.org/kafka/2.5.0/kafka_2.13-2.5.0.tgz
+wget https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.13.0/jmx_prometheus_javaagent-0.13.0.jar
+wget https://raw.githubusercontent.com/prometheus/jmx_exporter/master/example_configs/kafka-2_0_0.yml
+

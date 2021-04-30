@@ -1,0 +1,15 @@
+
+- name: restart zookeeper service 
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: zookeeper
+  #throttle: 1
+    
+- name: restart kafka service 
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: kafka
+  #throttle: 1
+  

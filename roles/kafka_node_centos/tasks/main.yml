@@ -5,6 +5,12 @@
     - never
     - clean
 
+- name: Clean kafka data dirs
+  include_tasks: clean-data.yml
+  tags:
+    - never
+    - clean-data
+
 #- name: test pervius installation
 #  include_tasks: is_isnstalled.yml
 

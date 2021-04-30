@@ -1,0 +1,115 @@
+- debug: var=master
+  when: not master
+  tags: restore
+- name: Stop PostgreSQL service
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+    enabled: yes
+  tags:
+    - restore
+  
+- name: Clean a directory for backup
+  file:
+    path: '{{ pgdata }}/'
+    state: absent
+  tags:
+    - restore
+
+- name: copy files from last backup
+  shell:
+    cmd: cp -r {{ backup_path }}/last {{ pgdata }}
+    warn: false
+  become: true
+  become_user: postgres
+  when: master
+  tags:
+    - restore
+
+- name: copy files from last backup
+  shell:
+    cmd: echo -e "restore_command = 'cp {{ archive_path }}/%f %p'\nrecovery_target_time = '{{ recovery_target_time }}'" >> {{ pgdata }}/postgresql.auto.conf
+    warn: false
+  become: true
+  become_user: postgres
+  when: master
+  tags:
+    - restore
+
+- name: Give insecure permissions to an existing file
+  file:
+    path: '{{ pgdata }}/recovery.signal'
+    owner: postgres
+    group: postgres
+    state: touch
+  when: master  
+  tags:
+    - restore
+
+- name: Enable end start PostgreSQL service on master
+  systemd:
+    name: postgresql-{{ ver }}
+    state: started
+    enabled: yes
+  when: master  
+  tags:
+    - restore
+
+- name: Create clean data directory on slave
+  file:
+    path: '{{ pgdata }}'
+    owner: postgres
+    group: postgres
+    state: directory
+    mode: '0700'
+  when: not master  
+  tags:
+    - restore
+
+- name: copy data to replica
+  shell: 
+    cmd: pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ master_ip }} --username repuser --pgdata={{ pgdata }} -C -S pgstandby_{{inventory_hostname | replace('-','_') }}
+    warn: false
+  when: not master 
+  become_user: postgres
+  become: yes
+  environment:
+      PGPASSWORD: '{{ reppassword }}'    
+  tags:
+    - restore
+
+- name: Enable end start PostgreSQL service on slave
+  systemd:
+    name: postgresql-{{ ver }}
+    state: started
+    enabled: yes
+  when: not master  
+  tags:
+    - restore
+
+- name: Remove recovery.signal and standby.signal
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - '{{ pgdata }}/recovery.signal'
+    - '{{ pgdata }}/standby.signal'
+  when: master
+  tags:
+    - make_rw
+
+- name: restart pgsql 
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: postgresql-{{ ver }}
+  when: master
+  tags:
+    - make_rw
+
+#chmod 0700 /var/lib/pgsql/12/data/
+#echo "restore_command = 'cp /tmp/backup_log/%f %p'" >> /var/lib/pgsql/12/data/postgresql.auto.conf
+#echo "recovery_target_timeline = '1'" >> /var/lib/pgsql/12/data/postgresql.auto.conf
+#echo "recovery_target_time = '2020-10-28 21:56:18.849196+02'" >> /var/lib/pgsql/12/data/postgresql.auto.conf
+#touch /var/lib/pgsql/12/data/recovery.signal
+#psql -d "testdb"  -c "SELECT COUNT(*) FROM large_test;"

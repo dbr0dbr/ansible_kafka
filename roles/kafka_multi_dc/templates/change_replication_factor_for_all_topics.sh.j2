@@ -1,0 +1,15 @@
+#!/bin/bash
+ids={% for host in groups['kafka'] %}{{ hostvars[host]['node_id'] }}{% if not loop.last %},{% endif %}{% endfor %}
+
+for topicname in `{{ kafka_dir }}/bin/kafka-topics.sh --zookeeper localhost:2181 --list`; do
+{{ kafka_dir }}/bin/kafka-topics.sh --describe --zookeeper 127.0.01:2181 --topic $topicname
+
+cat <<EOF> /tmp/increase-replication-factor.json
+{"version":1,
+  "partitions":[
+     {"topic":"$topicname","partition":0,"replicas":[$ids]}
+]}
+EOF
+
+{{ kafka_dir }}/bin/kafka-reassign-partitions.sh --zookeeper localhost:2181 --reassignment-json-file /tmp/increase-replication-factor.json --execute
+done

@@ -1,12 +1,46 @@
 [all:vars]
-elastic_ip=1.1.1.1
 proxy_env={"http_prox" : "http://192.168.121.1:8888", "https_proxy" : "https://192.168.121.1:8888", "no_proxy" : ".atbmarket.com,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"}
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
+[pg_cluster:children]
+pg_dc1
+pg_dc2
+
+[pg_dc1]
+pg-cl-1 ansible_host=192.168.121.191 master=YES
+pg-cl-2 ansible_host=192.168.121.131 my_master=pg-cl-1
+
+[pg_dc2]
+pg-cl-3 ansible_host=192.168.132.218 my_master=pg-cl-1  
+pg-cl-4 ansible_host=192.168.132.135 my_master=pg-cl-1
+
+[kafka_stretch:children]
+kafka_dc1 
+kafka_dc2
+
+[kafka_dc1]
+#kafka-str-1 ansible_host=192.168.121.130 node_id=1
+#kafka-str-2 ansible_host=192.168.121.220 node_id=2
+#kafka-str-3 ansible_host=192.168.121.157 node_id=3
+kafka-1	ansible_host=192.168.121.127 node_id=1
+kafka-2	ansible_host=192.168.121.160 node_id=2
+kafka-3	ansible_host=192.168.121.144 node_id=3
+#kafka-restore ansible_host=192.168.121.195 node_id=1
+
+[kafka_dc2]
+kafka-str-4 ansible_host=192.168.132.182 node_id=4
+kafka-str-5 ansible_host=192.168.132.121 node_id=5
+kafka-str-6 ansible_host=192.168.132.127 node_id=6
+
 [kafka]
-kafka-1	ansible_host=192.168.121.230 node_id=1
-kafka-2	ansible_host=192.168.121.224 node_id=2
-kafka-3	ansible_host=192.168.121.227 node_id=3
+kafka-1	ansible_host=192.168.121.127 node_id=1
+kafka-2	ansible_host=192.168.121.160 node_id=2
+kafka-3	ansible_host=192.168.121.144 node_id=3
+
+[kafka-new]
+kafka-4	ansible_host=192.168.121.222 node_id=4
+kafka-5	ansible_host=192.168.121.131 node_id=5
+kafka-6	ansible_host=192.168.121.213 node_id=6
 
 [ha]
 ha-1 ansible_host=192.168.122.46 interface=enp1s0
@@ -16,8 +50,32 @@ ha-2 ansible_host=192.168.122.66 interface=enp1s0
 virtual_ip=192.168.123.3/24
 
 [pg]
-pg-1   ansible_host=192.168.121.213  master=YES
+pg-1   ansible_host=192.168.121.190  master=YES
 pg-2   ansible_host=192.168.121.182
+
+[pg-for-kafka]
+pg-transit   ansible_host=192.168.121.136  
+
+[pg-multi-dc]
+pg-d1 ansible_host=192.168.121.151  dc=1 main=YES master=YES
+pg-d2 ansible_host=192.168.121.216  dc=1
+pg-k1 ansible_host=192.168.121.200  dc=2 main=YES
+pg-k2 ansible_host=192.168.121.137  dc=2
+
+[kafka-multi-dc]
+kafka_dc1_1  ansible_host=192.168.121.146 node_id=1
+kafka_dc1_2  ansible_host=192.168.121.224 node_id=2
+kafka_dc1_3  ansible_host=192.168.121.217 node_id=3
+kafka_dc2_1  ansible_host=192.168.132.2 node_id=4
+kafka_dc2_2  ansible_host=192.168.132.3 node_id=5
+kafka_dc2_3  ansible_host=192.168.132.4 node_id=6
+kafka_dc3_1  ansible_host=192.168.133.2 node_id=7 arbiter=YES
+
+
+[rke-workers]
+rke4 ansible_host=192.168.121.146
+rke5 ansible_host=192.168.121.130
+rke6 ansible_host=192.168.121.102
 
 [pg:vars]
 max_connections = 100
