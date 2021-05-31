@@ -5,21 +5,28 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 [pg_cluster:children]
 pg_dc1
 pg_dc2
-
+###############################################################
 [pg_dc1]
-pg-cl-1 ansible_host=192.168.121.191 master=YES
+pg-cl-1 ansible_host=192.168.121.191 my_master=pg-cl-3
 pg-cl-2 ansible_host=192.168.121.131 my_master=pg-cl-1
 
 [pg_dc2]
-pg-cl-3 ansible_host=192.168.132.218 my_master=pg-cl-1  
-pg-cl-4 ansible_host=192.168.132.135 my_master=pg-cl-1
+pg-cl-3 ansible_host=192.168.132.218 master=YES
+pg-cl-4 ansible_host=192.168.132.135 my_master=pg-cl-3
 
+####################################################################
+
+# master=YES
+# my_master=pg-cl-1
+# my_master=pg-cl-3
+
+####################################################################
 [kafka_stretch:children]
 kafka_dc1 
 kafka_dc2
 
 [kafka_dc1]
-#kafka-str-1 ansible_host=192.168.121.130 node_id=1
+#kafka-str-1 ansible_host=192.168.121.130 node_id=7
 #kafka-str-2 ansible_host=192.168.121.220 node_id=2
 #kafka-str-3 ansible_host=192.168.121.157 node_id=3
 kafka-1	ansible_host=192.168.121.127 node_id=1
@@ -50,7 +57,8 @@ ha-2 ansible_host=192.168.122.66 interface=enp1s0
 virtual_ip=192.168.123.3/24
 
 [pg]
-pg-1   ansible_host=192.168.121.190  master=YES
+pg-cl-3 ansible_host=192.168.132.218 master=YES
+#pg-1   ansible_host=192.168.121.190  master=YES
 pg-2   ansible_host=192.168.121.182
 
 [pg-for-kafka]

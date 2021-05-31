@@ -19,20 +19,6 @@
     inventory_replication_slots_list: "{% set inventory_replication_slots=[]%}{% for host in groups['pg_cluster'] %}{% if 'my_master' in hostvars[host] and hostvars[host]['my_master'] == inventory_hostname %}{%set slot='pgstandby_'+host | replace('-','_') %}{{inventory_replication_slots.append(slot)}}{%endif%}{%endfor%}{{inventory_replication_slots}}"
 
 
-
-- name: get my replicas
-  shell: 
-    cmd: psql -c "select client_addr from pg_stat_replication;"
-    warn: false
-  become_user: postgres
-  become: yes
-  register: replication_slots
-  changed_when: False
-
-- name: set my_replicas
-  set_fact:
-    my_replicas: "{{replication_slots['stdout_lines'][2:-1] | replace(' ','') }}"
-
 #- debug: var=current_replication_slots_list
 #- debug: var=inventory_replication_slots_list
 #- meta: end_play
@@ -166,4 +152,3 @@
 - debug: var=hostvars[my_master]['ansible_default_ipv4']['address']
 - debug: var=in_sync
 - debug: var=sender_host
-- debug: var=my_replicas

@@ -1,0 +1,51 @@
+- name: Create a directory for archive log if it does not exist
+  file:
+    path: '{{ archive_path }}'
+    state: directory
+    owner: 'postgres'
+    group: 'postgres'
+  tags:
+    - backup
+
+- name: Create a directory for backup if it does not exist
+  file:
+    path: '{{ backup_path }}/last'
+    state: directory
+    owner: 'postgres'
+    group: 'postgres'
+  tags:
+    - backup
+
+- postgresql_db:
+    name: testdb
+  tags:
+    - test_db
+    - never
+  become: true
+  become_user: postgres
+  when: master in ok_list
+
+- name: Compress pervius archive
+  shell: 
+    cmd: tar -czf {{ backup_path }}/backup_{{ ansible_date_time['iso8601'] }}.tar.gz {{ backup_path }}/last/
+    warn: false
+  tags:
+    - backup
+  
+
+- name: Clean a directory for backup
+  file:
+    path: '{{ backup_path }}/last/'
+    state: absent
+  tags:
+    - backup
+    
+- name: backup_db
+  shell: pg_basebackup --checkpoint=fast -v -R -D '{{ backup_path }}/last/'
+  become: true
+  become_user: postgres
+  tags:
+    - backup
+
+
+

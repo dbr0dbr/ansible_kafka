@@ -19,22 +19,8 @@
     inventory_replication_slots_list: "{% set inventory_replication_slots=[]%}{% for host in groups['pg_cluster'] %}{% if 'my_master' in hostvars[host] and hostvars[host]['my_master'] == inventory_hostname %}{%set slot='pgstandby_'+host | replace('-','_') %}{{inventory_replication_slots.append(slot)}}{%endif%}{%endfor%}{{inventory_replication_slots}}"
 
 
-
-- name: get my replicas
-  shell: 
-    cmd: psql -c "select client_addr from pg_stat_replication;"
-    warn: false
-  become_user: postgres
-  become: yes
-  register: replication_slots
-  changed_when: False
-
-- name: set my_replicas
-  set_fact:
-    my_replicas: "{{replication_slots['stdout_lines'][2:-1] | replace(' ','') }}"
-
-#- debug: var=current_replication_slots_list
-#- debug: var=inventory_replication_slots_list
+- debug: var=current_replication_slots_list
+- debug: var=inventory_replication_slots_list
 #- meta: end_play
 #pgstandby_{{  | replace('-','_') }}
 
@@ -67,40 +53,11 @@
     in_sync: "{% if hostvars[my_master]['in_sync'] and hostvars[my_master]['ansible_default_ipv4']['address'] == my_curren_master_ip %}True{%else%}False{%endif%}"
   when: not master and not hostvars[my_master]['master']
 
-- name: Stop PostgreSQL service on l2 replica
-  systemd:
-    name: postgresql-{{ ver }}
-    state: stopped
-  when: not (master or hostvars[my_master]['master']) and (not in_sync or (hostvars[my_master]['in_sync'] is defined and not hostvars[my_master]['in_sync']))
-
-- name: remove old replication slots 1
-  shell: 
-    cmd: psql -c "select pg_drop_replication_slot('{{ item }}');"
-    warn: false
-  become_user: postgres
-  become: yes
-  register: current_replication_slots
-  changed_when: False
-  with_items: "{{current_replication_slots_list}}"
-  when: item not in inventory_replication_slots_list
-  ignore_errors: yes
-  #tags: never
-
 - name: Stop PostgreSQL service on l1 replica
   systemd:
     name: postgresql-{{ ver }}
     state: stopped
   when: not master and (not in_sync or hostvars[my_master]['in_sync'] is defined and not hostvars[my_master]['in_sync'])
-
-- name: Up slave to master
-  shell: 
-    cmd: /usr/pgsql-12/bin/pg_ctl  promote -D {{ pgdata }}
-    warn: false
-  tags: 
-    - failover
-  become_user: postgres
-  become: yes
-  when: master and my_curren_master_ip !=  ''
 
 - name: remove old replication slots
   shell: 
@@ -112,10 +69,17 @@
   changed_when: False
   with_items: "{{current_replication_slots_list}}"
   when: item not in inventory_replication_slots_list
-  ignore_errors: yes
-  #tags: never
-
-#- meta: end_play
+ 
+- name: Up slave to master
+  shell: 
+    cmd: /usr/pgsql-12/bin/pg_ctl  promote -D {{ pgdata }}
+    warn: false
+  tags: 
+    - failover
+  become_user: postgres
+  become: yes
+  when: master and my_curren_master_ip !=  ''
+  
 - name: configure l1 replica
   block:
   - name: Stop PostgreSQL service on l1 replica
@@ -154,16 +118,14 @@
     become: yes
     environment:
         PGPASSWORD: '{{ reppassword }}'
-    
+  
   - name: Sart PostgreSQL service on l2 replica
     systemd:
       name: postgresql-{{ ver }}
       state: started
-  when: not (master or hostvars[my_master]['master']) and (not in_sync or (hostvars[my_master]['in_sync'] is defined and not hostvars[my_master]['in_sync']))
+  when: not master and (not in_sync or hostvars[my_master]['in_sync'] is defined and not hostvars[my_master]['in_sync'])
   throttle: 1
 
 - debug: var=my_curren_master_ip
 - debug: var=hostvars[my_master]['ansible_default_ipv4']['address']
 - debug: var=in_sync
-- debug: var=sender_host
-- debug: var=my_replicas

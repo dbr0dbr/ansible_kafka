@@ -1,0 +1,92 @@
+- name: get slaves for node
+  shell: 
+    cmd: psql -c "select client_addr from pg_stat_replication;"
+    warn: false
+  become_user: postgres
+  become: yes
+  register: replicas
+  ignore_errors: yes
+  changed_when: False
+
+- name: get slots for node
+  shell: 
+    cmd: psql -c 'show primary_slot_name;'
+    warn: false
+  become_user: postgres
+  become: yes
+  register: slots
+  ignore_errors: yes
+  changed_when: False
+
+
+- name: get slave servers
+  set_fact:
+    is_slave_now: "{% if slots.stdout_lines[2] == ' ' %}False{%else%}True{%endif%}"
+
+- name: get lsit with slaves
+  set_fact: 
+    node_current_slaves: "{{ replicas.stdout_lines[2:-1] }}"
+  when: not replicas.failed
+
+- name: get in sync nodes
+  set_fact: 
+    in_sync: "{% if (' '+ansible_default_ipv4['address']) in hostvars[slave_for]['node_current_slaves'] %}True{% else %}False{% endif %}"
+  when: not replicas.failed and not master
+
+- debug: var=in_sync
+- debug: var=ansible_default_ipv4['address']
+- debug: var=hostvars[slave_for]['node_current_slaves']
+- debug: var=replicas.stdout
+#- meta: end_play
+
+- name: Stop PostgreSQL service on replica
+  systemd:
+    name: postgresql-{{ ver }}
+    state: stopped
+  when: not master and not in_sync
+
+- name: Up slave to master
+  shell: 
+    cmd: /usr/pgsql-12/bin/pg_ctl  promote -D {{ pgdata }}
+    warn: false
+  tags: 
+    - failover
+  become_user: postgres
+  become: yes
+  when: is_slave_now and master
+
+- name: configure l1 replica
+  block:
+  - name: copy data to l1 replica
+    shell: 
+      cmd: rm -rf {{ pgdata }}/*; pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ hostvars[slave_for]['ansible_default_ipv4']['address'] }} --username repuser --pgdata={{ pgdata }} -C -S pgstandby_{{inventory_hostname | replace('-','_') }}
+      warn: false
+    become_user: postgres
+    become: yes
+    environment:
+        PGPASSWORD: '{{ reppassword }}'
+
+  - name: Sart PostgreSQL service on l1 replica
+    systemd:
+      name: postgresql-{{ ver }}
+      state: started
+  when: not master and hostvars[slave_for]['master'] and not in_sync
+  throttle: 1
+
+- name: configure l2 replica
+  block:
+  - name: copy data to l2 replica
+    shell: 
+      cmd: rm -rf {{ pgdata }}/*; pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{ hostvars[slave_for]['ansible_default_ipv4']['address'] }} --username repuser --pgdata={{ pgdata }} -C -S pgstandby_{{inventory_hostname | replace('-','_') }}
+      warn: false
+    become_user: postgres
+    become: yes
+    environment:
+        PGPASSWORD: '{{ reppassword }}'
+
+  - name: Sart PostgreSQL service on l2 replica
+    systemd:
+      name: postgresql-{{ ver }}
+      state: started
+  when: not master and not hostvars[slave_for]['master'] and not in_sync
+  throttle: 1

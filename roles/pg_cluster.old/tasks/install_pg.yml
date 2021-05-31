@@ -27,10 +27,7 @@
 
 - name: init db
   shell: if [ ! -f {{ pgdata }}/PG_VERSION ]; then /usr/pgsql-{{ ver }}/bin/postgresql-{{ ver }}-setup initdb; fi
-  register: init_db
-
-#- debug: var=init_db
-#- meta: end_play
+  
 
 - name: Enable end start PostgreSQL service
   systemd:
@@ -108,3 +105,9 @@
   become: yes
   tags: reconfigure
 
+- name: CREATE EXTENSION 
+  shell: psql -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;' 
+  when: master 
+  become_user: postgres
+  become: yes
+  tags: reconfigure

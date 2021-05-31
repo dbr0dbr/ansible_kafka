@@ -1,4 +1,9 @@
 ---
+- name: set_replication_factor
+  set_fact:
+    replication_factor: "{{ groups[master_dc] | length }}"
+  when: master_dc is defined
+
 - name: test kafka_distr_dir
   stat: path="{{ kafka_root_dir }}/{{ kafka_distr_name }}"
   register: kafka_distr_dir

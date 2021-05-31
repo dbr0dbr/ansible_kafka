@@ -67,12 +67,12 @@ num.partitions=2
 # The number of threads per data directory to be used for log recovery at startup and flushing at shutdown.
 # This value is recommended to be increased for installations with data dirs located in RAID array.
 num.recovery.threads.per.data.dir=1
-default.replication.factor={{ groups['kafka_stretch'] | length }}
+default.replication.factor={{ replication_factor }}
 min.insync.replicas=2
 ############################# Internal Topic Settings  #############################
 # The replication factor for the group metadata internal topics "__consumer_offsets" and "__transaction_state"
 # For anything other than development testing, a value greater than 1 is recommended to ensure availability such as 3.
-offsets.topic.replication.factor={{ groups['kafka_stretch'] | length }}
+offsets.topic.replication.factor={{ replication_factor }}
 transaction.state.log.replication.factor=1
 transaction.state.log.min.isr=1
 

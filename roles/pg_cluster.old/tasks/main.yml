@@ -61,14 +61,6 @@
   timezone:
     name: Europe/Kiev
 
-- name: CREATE EXTENSION 
-  shell: if systemctl status postgresql-{{ ver }} |grep "active (running)"; then psql -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;' ; fi
-  when: master 
-  become_user: postgres
-  become: yes
-  tags: reconfigure
-  when: master
-  
 - name: Stop PostgreSQL service
   systemd:
     name: postgresql-{{ ver }}
