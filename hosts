@@ -2,25 +2,12 @@
 proxy_env={"http_prox" : "http://192.168.121.1:8888", "https_proxy" : "https://192.168.121.1:8888", "no_proxy" : ".atbmarket.com,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"}
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
-[pg_cluster:children]
-pg_dc1
-pg_dc2
-###############################################################
-[pg_dc1]
-pg-cl-1 ansible_host=192.168.121.191 my_master=pg-cl-3
+[pg_cluster]
+pg-cl-1 ansible_host=192.168.121.191 master=Yes 
 pg-cl-2 ansible_host=192.168.121.131 my_master=pg-cl-1
-
-[pg_dc2]
-pg-cl-3 ansible_host=192.168.132.218 master=YES
+pg-cl-3 ansible_host=192.168.132.218 my_master=pg-cl-1
 pg-cl-4 ansible_host=192.168.132.135 my_master=pg-cl-3
 
-####################################################################
-
-# master=YES
-# my_master=pg-cl-1
-# my_master=pg-cl-3
-
-####################################################################
 [kafka_stretch:children]
 kafka_dc1 
 kafka_dc2
@@ -57,8 +44,7 @@ ha-2 ansible_host=192.168.122.66 interface=enp1s0
 virtual_ip=192.168.123.3/24
 
 [pg]
-pg-cl-3 ansible_host=192.168.132.218 master=YES
-#pg-1   ansible_host=192.168.121.190  master=YES
+pg-1   ansible_host=192.168.121.190  master=YES
 pg-2   ansible_host=192.168.121.182
 
 [pg-for-kafka]

@@ -1,0 +1,8 @@
+mount -o remount,rw /system
+echo 'mount -o remount,rw /' >> /system/etc/mkshrc
+echo 'echo "set service.adb.tcp.port=5555" >> /default.prop' >> /system/etc/mkshrc
+echo 'mount -o remount,ro /' >> /system/etc/mkshrc
+echo "set service.adb.tcp.port=5555" >> /system/build.prop
+echo "set service.adb.tcp.port=5555" >> /default.prop
+adb tcpip 5555
+

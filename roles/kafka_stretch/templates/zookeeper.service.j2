@@ -3,6 +3,7 @@ Requires=network.target remote-fs.target
 After=network.target remote-fs.target
 
 [Service]
+Environment=EXTRA_ARGS=-javaagent:{{ jmx_dir }}/jmx-exporter.jar=7070:{{ jmx_dir }}/zookeeper.yml
 Type=simple
 User={{ kafka_user }}
 ExecStart={{ zoo_dir }}/bin/zkServer.sh start-foreground

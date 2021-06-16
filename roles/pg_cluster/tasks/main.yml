@@ -1,14 +1,3 @@
-- name: stop postgresql on disabled
-  systemd:
-    name: postgresql-{{ ver }}
-    state: stopped
-  tags: reconfigure
-  when: disabled is defined and disabled in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
-  ignore_errors: yes
-
-- meta: end_host
-  when: disabled is defined and disabled in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]
-
 - name: set master
   set_fact:
     master: "{% if master is defined and master in ['yes', 'Yes', 'YES', 'TRUE', 'True', 'true', True]%}True{% else %}False{% endif %}"
@@ -17,24 +6,25 @@
 - name: calc masters
   set_fact: 
     masters_num: "{% for host in groups['pg_cluster'] %}{% if 'master' in hostvars[host] and hostvars[host]['master'] == True %}1{% endif %}{% endfor %}"
+  tags: always
 
 - name: stop with error
   fail:
     msg: "Multiple or not master set! Must be one master in inventory"
   when: masters_num != '1'
+  tags: always
 
 - name: install PostgreSQL
   include_tasks: install_pg.yml
   tags:
     - repl
     - reconfigure
-#    - never
 
 - name: config replication
   include_tasks: config_replication.yml
   tags:
     - repl
-    - reconfigure
+    - never
 
 - name: backup PostgreSQL
   include_tasks: backuping_pg.yml
@@ -60,6 +50,7 @@
 - name: set timezone to Europe/Kiev
   timezone:
     name: Europe/Kiev
+  tags: always
 
 - name: CREATE EXTENSION 
   shell: if systemctl status postgresql-{{ ver }} |grep "active (running)"; then psql -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;' ; fi
@@ -69,6 +60,42 @@
   tags: reconfigure
   when: master
   
+- name: Create a scripts directory if it does not exist
+  file:
+    path: '{{ scripts_dir }}'
+    state: directory
+  tags:
+    - repl
+    - reconfigure
+
+- name: Template configuration file for get_replica
+  template:
+    src: get_replica_from_host.sh.j2
+    dest: '{{ scripts_dir }}/get_replica_from_{{ item }}.sh'
+    mode: '0711'
+  with_items: "{{ groups['pg_cluster'] }}"
+  tags:
+    - repl
+    - reconfigure
+
+- name: Template configuration file for up_to_master
+  template:
+    src: up_to_master.sh.j2
+    dest: '{{ scripts_dir }}/up_to_master.sh'
+    mode: '0755'
+  tags:
+    - repl
+    - reconfigure
+
+- name: Template configuration file for check_replica_state
+  template:
+    src: check_replica_state.sh.j2
+    dest: '{{ scripts_dir }}/check_replica_state.sh'
+    mode: '0755'
+  tags:
+    - repl
+    - reconfigure
+
 - name: Stop PostgreSQL service
   systemd:
     name: postgresql-{{ ver }}

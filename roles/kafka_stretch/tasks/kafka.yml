@@ -97,6 +97,7 @@
     name: kafka
     state: started
     enabled: yes
+    daemon_reload: yes
 
 - name: change loglevel for connect-log4j.properties
   replace:

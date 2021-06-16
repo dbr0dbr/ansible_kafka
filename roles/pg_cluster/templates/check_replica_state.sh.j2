@@ -1,0 +1,3 @@
+#!/bin/bash
+su postgres -c 'psql -c "select client_addr,sent_lsn,write_lsn,flush_lsn,replay_lsn,write_lag,flush_lag,replay_lag  from pg_stat_replication;"'
+ 

@@ -65,6 +65,34 @@
     state: enabled
     immediate: yes
 
+- name: Create a jmx-explorer directory if it does not exist
+  file:
+    path: '{{ jmx_dir }}'
+    state: directory
+
+- name: Copy jmx-explorer
+  copy:
+    src: jmx-exporter.jar
+    dest: "{{ jmx_dir }}/jmx-exporter.jar"
+
+- name: Open port for zookeeper jmx-exporter
+  firewalld:
+    port: 7070/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Copy zookeeper temple for jmx-explorer
+  copy:
+    src: zookeeper.yml
+    dest: "{{ jmx_dir }}/zookeeper.yml"
+
+- name: Configure zookeeper to worck with jmx-exporter
+  lineinfile:
+    path: '{{ zoo_dir }}/bin/zkEnv.sh'
+    regexp: 'export SERVER_JVMFLAGS='
+    line: 'export SERVER_JVMFLAGS="-javaagent:{{ jmx_dir }}/jmx-exporter.jar=7070:{{ jmx_dir }}/zookeeper.yml"'
+
 - name: Template configuration file to zookeeper.service
   template:
     src: zookeeper.service.j2
@@ -73,10 +101,11 @@
     - reconfigure
   notify:
     - restart zookeeper service 
+  
 
 - name: enable and start zookeeper.service
   systemd:
     name: zookeeper
     state: started
     enabled: yes
-
+    daemon_reload: yes

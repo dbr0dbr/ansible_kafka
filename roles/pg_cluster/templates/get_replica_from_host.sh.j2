@@ -1,0 +1,5 @@
+#!/bin/bash
+systemctl stop postgresql-12
+rm -rf /var/lib/pgsql/12/data/*
+su postgres -c "PGPASSWORD={{ reppassword }} pg_basebackup  --progress --write-recovery-conf --wal-method=stream --checkpoint=fast --host {{hostvars[item]['ansible_host']}} --username repuser --pgdata=/var/lib/pgsql/12/data/ -C -S pgstandby_{{inventory_hostname | replace('-','_')}}"
+systemctl start postgresql-12 
