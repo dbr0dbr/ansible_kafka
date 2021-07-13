@@ -62,7 +62,7 @@ log.dirs={{ kafka_log_dir }}
 # The default number of log partitions per topic. More partitions allow greater
 # parallelism for consumption, but this will also result in more files across
 # the brokers.
-num.partitions=2
+num.partitions={{ num_partitions }}
 
 # The number of threads per data directory to be used for log recovery at startup and flushing at shutdown.
 # This value is recommended to be increased for installations with data dirs located in RAID array.
@@ -144,3 +144,4 @@ delete.topic.enable = true
 auto.leader.rebalance.enable = true
 leader.imbalance.check.interval.seconds = 60
 leader.imbalance.per.broker.percentage = 10
+auto.create.topics.enable = true

@@ -100,3 +100,24 @@
     group: '{{ kafka_group }}'
   tags: 
     - reconfigure
+
+- name: install python3
+  yum:
+    name: python3
+  environment: "{{ proxy_env }}"
+  tags:
+    - reconfigure
+
+- name: install pip3
+  yum:
+    name: python3-pip
+  environment: "{{ proxy_env }}"
+  tags:
+    - reconfigure
+
+- pip:
+    name: pyyaml
+    executable: pip-3
+  environment: "{{ proxy_env }}"
+  tags:
+    - reconfigure

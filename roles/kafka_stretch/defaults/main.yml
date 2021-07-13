@@ -2,6 +2,7 @@ kafka_user: kafka
 kafka_group: kafka
 
 replication_factor: "{{ groups['kafka_stretch'] | length }}"
+num_partitions: 2
 zoo_distr: "apache-zookeeper-3.6.1-bin.tar.gz"
 zoo_distr_name: "{{ ((zoo_distr | splitext)[0] | splitext)[0]  }}"
 zoo_root_dir: "/usr/local"

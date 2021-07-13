@@ -89,6 +89,31 @@
   tags:
     - reconfigure
 
+- name: install python3
+  yum:
+    name: python3
+  environment: "{{ proxy_env }}"
+  tags:
+    - reconfigure
+
+- name: install pip3
+  yum:
+    name: python3-pip
+  environment: "{{ proxy_env }}"
+  tags:
+    - reconfigure
+
+- name: install pyyaml
+  shell: pip3 install pyyaml
+  environment: "{{ proxy_env }}"
+  tags:
+    - reconfigure
+
+- name: Copy config_topics.py
+  copy:
+    src: config_topics.py
+    dest: "{{ scripts_dir }}/config_topics.py"
+
 - name: restart service zookeeper
   systemd:
     state: restarted
