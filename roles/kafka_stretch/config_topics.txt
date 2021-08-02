@@ -1,0 +1,26 @@
+Выложить на одну из нод кластера конфиг для топиков по пути /home/kafka/scripts/topics_config.yml
+На этой ноде выполнить: cd /home/kafka/scripts/; python3 config_topics.py -- если мы меняем параметры для топиков без префиксов, либо
+cd /home/kafka/scripts/; python3 config_topics.py prefix1 prefix2 .. prefixN если мы хотим изменить топики с префиксами  prefix1 prefix2 .. prefixN
+
+Лог пишется в config_topics.log, для изменения уровня логгирования нужно в файле /home/kafka/scripts/config_topics.py изменить уровень в строке "logging.basicConfig(level=logging.INFO"
+
+Формат файла /home/kafka/scripts/topics_config.yml:
+
+kafkaTopics:
+    - name: "test"
+      partitions: 50
+      retention.ms: 100
+    - name: "test2"
+      partitions: 3
+    - name: "444"
+      partitions: 2
+    - name: "tt"
+    - name: "tt_p"
+      partitions: 2
+    - name: "tt_r"
+      retention.ms: 10000
+    - name: "tt_p_r"
+      partitions: 10
+      retention.ms: 10000
+
+Параметры partitions и retention.ms не являются обязательными, в случае если параметр не указан используется дефолтное значение, если это возможно (число партиций нельзя уменьшать)

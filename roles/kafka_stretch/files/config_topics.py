@@ -5,7 +5,6 @@ import config
 import logging
 import sys
 
-
 logging.basicConfig(level=logging.INFO, filename='config_topics.log', format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 def create_topic(config_topic):

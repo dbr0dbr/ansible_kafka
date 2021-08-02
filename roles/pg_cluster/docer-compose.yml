@@ -1,0 +1,24 @@
+  debezium:
+    container_name: debezium
+    image: debezium/connect
+    environment:
+      - BOOTSTRAP_SERVERS=192.168.121.127:9092,192.168.121.160:9092,192.168.121.144:9092,192.168.132.182:9092,192.168.132.121:9092,192.168.132.127:9092
+      - GROUP_ID=1
+      - CONFIG_STORAGE_TOPIC=my_connect_configs
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets
+      - STATUS_STORAGE_TOPIC=my_connect_statuses
+#      - CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR=2
+#      - CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR=2
+#      - CONNECT_STATUS_STORAGE_REPLICATION_FACTOR=2
+    ports:
+      - 8083:8083
+  schema-registry:
+    container_name: schema-registry
+    hostname: schema-registry
+    image: 'confluentinc/cp-schema-registry:3.1.1'
+    environment:
+      - SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL=192.168.121.127:2181,192.168.121.160:2181,192.168.121.144:2181
+      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+    ports:
+      - 8081:8081
+ 
