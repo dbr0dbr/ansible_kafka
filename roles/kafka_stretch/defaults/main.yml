@@ -1,6 +1,9 @@
 kafka_user: kafka
 kafka_group: kafka
 
+user_name: user
+user_pass: 11111111
+
 replication_factor: "{{ groups['kafka_stretch'] | length }}"
 #replication_factor: 2
 num_partitions: 2

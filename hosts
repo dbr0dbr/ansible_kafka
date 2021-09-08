@@ -1,6 +1,10 @@
 [all:vars]
 proxy_env={"http_prox" : "http://192.168.121.1:8888", "https_proxy" : "https://192.168.121.1:8888", "no_proxy" : ".atbmarket.com,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"}
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+jenkins_user = user2
+jenkins_group = kafka
+jenkins_master_key_dir = /root/.ssh
+jenkins_master = 192.168.121.226
 
 [pg_cluster]
 pg-cl-1 ansible_host=192.168.121.191 master=Yes 

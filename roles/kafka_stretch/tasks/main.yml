@@ -78,6 +78,7 @@
   file:
     path: '{{ scripts_dir }}'
     state: directory
+    mode: '0771'
 
 - name: create scripts
   template:
@@ -133,3 +134,13 @@
     - restart
     - never
   throttle: 1
+
+- name: add user {{ user_name }} with password
+  become: true
+  user:
+    name: "{{ user_name }}"
+    groups: "kafka"
+    shell: /bin/bash
+    password: "{{ user_pass | string | password_hash('sha512') }}"
+    append: yes
+    update_password: on_create

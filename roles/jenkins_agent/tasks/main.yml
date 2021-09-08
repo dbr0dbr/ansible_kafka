@@ -1,0 +1,53 @@
+- name: install java
+  yum:
+    name: "{{ packages }}"
+  environment: "{{ proxy_env }}"
+  vars:
+    packages:
+    - java-1.8.0-openjdk 
+    - java-1.8.0-openjdk-devel
+
+- name: Create jenkins group
+  group:
+    name: '{{ jenkins_group }}'
+    state: present
+
+- name: Create jenkins user
+  user:
+    name: '{{ jenkins_user }}'
+    group: '{{ jenkins_group }}'
+    state: present
+    createhome: yes
+
+- name: Create a .ssh directory if it does not exist
+  file:
+    path: '{{ jenkins_master_key_dir }}'
+    state: directory
+  delegate_to: '{{ jenkins_master }}'
+  
+- name: Generate RSA host key
+  shell: ssh-keygen -q -t rsa  -C "" -N "" -f '{{ jenkins_master_key_dir }}/id_rsa'
+  args:
+    creates: '{{ jenkins_master_key_dir }}/id_rsa'
+    chdir: '{{ jenkins_master_key_dir }}'
+  delegate_to: '{{ jenkins_master }}'
+  throttle: 1
+  
+- name: Store file into '{{ jenkins_master_key_dir }}/id_rsa.pub'
+  fetch:
+    src: '{{ jenkins_master_key_dir }}/id_rsa.pub'
+    dest: /tmp/id_rsa.pub
+    flat: yes
+  delegate_to: '{{ jenkins_master }}'
+
+- name: Set authorized key taken from file
+  authorized_key:
+    user: '{{ jenkins_user }}'
+    state: present
+    key: "{{ lookup('file', '/tmp/id_rsa.pub') }}" 
+
+- name: clean localhost
+  file:
+    path: /tmp/id_rsa.pub
+    state: absent
+  delegate_to: 127.0.0.1
