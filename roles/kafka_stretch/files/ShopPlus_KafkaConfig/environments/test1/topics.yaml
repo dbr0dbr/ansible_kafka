@@ -1,0 +1,29 @@
+environments:
+    - default_env
+    - test
+    - prod
+    - qw pasdp
+kafkaTopics:
+    - name: "test"
+      partitions: 500
+      retention.ms: 100
+    - name: "test2"
+      partitions: 30
+    - name: "444"
+      partitions: 20
+    - name: "tt"
+    - name: "tt_p"
+      partitions: 20
+    - name: "tt_r"
+      retention.ms: 10000
+    - name: "tt_p_r"
+      partitions: 100
+      retention.ms: 10000
+    - name: "2t"
+    - name: "2t_p"
+      partitions: 50
+    - name: "2t_r"
+      retention.ms: 10000
+    - name: "2t_p_r"
+      partitions: 30
+ 

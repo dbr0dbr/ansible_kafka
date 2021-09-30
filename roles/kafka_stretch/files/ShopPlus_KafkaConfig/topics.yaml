@@ -1,0 +1,24 @@
+kafkaTopics:
+    - name: "test"
+      partitions: 50
+      retention.ms: 100
+    - name: "test2"
+      partitions: 3
+    - name: "444"
+      partitions: 2
+    - name: "tt"
+    - name: "tt_p"
+      partitions: 2
+    - name: "tt_r"
+      retention.ms: 10000
+    - name: "tt_p_r"
+      partitions: 10
+      retention.ms: 10000
+    - name: "2t"
+    - name: "2t_p"
+      partitions: 5
+    - name: "2t_r"
+      retention.ms: 10000
+    - name: "2t_p_r"
+      partitions: 3
+ 

@@ -1,0 +1,4 @@
+kafkaTopics:
+    - name: "zalupa"
+      partitions: 50
+      retention.ms: 100

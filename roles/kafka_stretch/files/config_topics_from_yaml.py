@@ -60,23 +60,27 @@ def get_current_topics():
       topic['Configs']=dict(zip(topic['Configs'].replace('=',',').split(',')[::2], topic['Configs'].replace('=',',').split(',')[1::2]))
   return current_topics
 
-def get_prefixs():
-  env_dir='/home/andc/Nextcloud/ansible/kafka_cluster/roles/kafka_stretch/files/ShopPlus_KafkaConfig/environments'
-  envs=[ env_name for env_name in os.listdir(env_dir) if os.path.isdir(f'{env_dir}/{env_name}') ]
-  return envs
-
-def get_config_topics(prefix_list):
+def get_config_topics():
   try:
     with open("topics_config.yml", 'r') as stream:
       topics_with_prefix=[]
-      config_topics=yaml.safe_load(stream)['kafkaTopics']
+      data=yaml.safe_load(stream)
+      config_topics=data['kafkaTopics']
+      prefix_list=data['environments']
+      logging.debug(f'prefix_list = {prefix_list}')
       validate_config_values(config_topics)
       if not prefix_list:
         return config_topics
       for prefix in prefix_list:
-        for topic in config_topics:
-          topics_with_prefix.append({k:(f'{prefix}.{v}' if k=='name' else v) for (k,v) in topic.items()})
-      print(topics_with_prefix)
+        if prefix == 'default_env':
+          for topic in config_topics:
+            topics_with_prefix.append(topic)  
+        elif ' ' in prefix:
+          logging.warn(f'spaces in environments  {prefix}')
+          raise ValueError(f'spaces in environments  {prefix}')
+        elif prefix != None:
+          for topic in config_topics:
+            topics_with_prefix.append({k:(f'{prefix}.{v}' if k=='name' else v) for (k,v) in topic.items()})
       return topics_with_prefix
   except yaml.YAMLError:
     logging.warn('cannot parse topics_config.yml')
@@ -84,24 +88,6 @@ def get_config_topics(prefix_list):
   except:
     logging.warn("No such file or directory: 'topics_config.yml'")
     raise
-
-def get_config_topics1(prefix_list, default_topic_values):
-  for prefix in prefix_list:
-    try:
-      with open(f"ShopPlus_KafkaConfig/environments/{prefix}/topics_config.yml", 'r') as stream:
-        config_topics=yaml.safe_load(stream)['kafkaTopics']
-        validate_config_values(config_topics)
-        for prefix in prefix_list:
-          for topic in config_topics:
-            topics_with_prefix.append({k:(f'{prefix}.{v}' if k=='name' else v) for (k,v) in topic.items()})
-        print(topics_with_prefix)
-        return topics_with_prefix
-    except yaml.YAMLError:
-      logging.warn('cannot parse topics_config.yml')
-      raise
-    except:
-      logging.warn("No such file or directory: 'topics_config.yml'")
-      raise
 
 def validate_config_values(config_topics): 
   for config_topic in config_topics:
@@ -123,9 +109,7 @@ def validate_config_values(config_topics):
       raise ValueError(f'partitions must be int and  > 0 in topic {config_topic["name"]}')
 
 logging.info('========================= script running =========================')
-prefix_list=get_prefixs()
-logging.debug(f'prefix_list = {prefix_list}')
-config_topics=get_config_topics(prefix_list)
+config_topics=get_config_topics()
 logging.debug(f'config_topics={config_topics}')
 current_topics=get_current_topics()
 logging.debug(f'current_topics={current_topics}')
