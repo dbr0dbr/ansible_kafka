@@ -1,0 +1,27 @@
+#!/bin/bash
+min_timeout=1
+max_timeout=30
+log={{ scripts_dir }}/config_topics.log
+timeout=$min_timeout
+
+function logging () {
+  message=$1
+  echo $message
+  echo "$(date +%d-%m-%y\ %H:%M:%S) - INFO - $message" >> $log
+}
+
+function config_topics {
+  result=`python3 {{ scripts_dir }}/config_topics.py`
+  if [ -z "$result" ]; then
+    logging "========================= script finished ========================="
+  else
+    echo "$result"
+    logging "=== wait ${timeout}s ... ==="
+    sleep $timeout
+    if [ $(($timeout * 2)) -lt $max_timeout ]; then timeout=$(($timeout * 2)); else timeout=$max_timeout; fi
+    config_topics
+  fi
+}
+
+logging "========================= script running ========================="
+config_topics
