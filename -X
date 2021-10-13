@@ -1,0 +1,23 @@
+== Info: Could not resolve host: GET
+== Info: Closing connection 0
+== Info:   Trying 192.168.120.35:80...
+== Info: TCP_NODELAY set
+== Info: Connected to 192.168.120.35 (192.168.120.35) port 80 (#1)
+=> Send header, 89 bytes (0x59)
+0000: GET /api/states/ HTTP/1.1
+001b: Host: 192.168.120.35
+0031: User-Agent: curl/7.68.0
+004a: Accept: */*
+0057: 
+== Info: Mark bundle as not supporting multiuse
+<= Recv header, 36 bytes (0x24)
+0000: HTTP/1.1 500 Internal Server Error
+<= Recv header, 19 bytes (0x13)
+0000: Content-Length: 0
+<= Recv header, 19 bytes (0x13)
+0000: Connection: close
+<= Recv header, 21 bytes (0x15)
+0000: Accept-Ranges: none
+<= Recv header, 2 bytes (0x2)
+0000: 
+== Info: Closing connection 1

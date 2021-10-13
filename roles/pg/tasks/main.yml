@@ -1,3 +1,9 @@
+- name: Install ca-certificates
+  yum:
+     name: "ca-certificates"
+     state: latest
+  environment: "{{ proxy_env }}"
+
 - name: set master
   set_fact:
     master: True
@@ -8,7 +14,6 @@
   set_fact:
     master_ip: "{% for host in groups['pg'] %} {% if 'master' in hostvars[host] and hostvars[host]['master'] == True %} {{ hostvars[host]['ansible_default_ipv4']['address'] }} {% endif %} {% endfor %}"
   tags: always
-
 
 - debug: var=master
   when: master
@@ -59,3 +64,6 @@
   tags: 
     - clean
     - never
+
+- name: backup PostgreSQL
+  include_tasks: backup.yml

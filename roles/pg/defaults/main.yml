@@ -1,3 +1,11 @@
+server_group: pg
+pg_backup_dir: /backup
+pg_archive_logs_dir: '{{ pg_backup_dir }}/archive_logs'
+pg_full_backup_dir: '{{ pg_backup_dir }}/full_backups'
+scripts_dir: /etc/tools
+pgsql_backup_min: '30'
+pgsql_backup_hour: '00'
+
 allow_ip:
   - 192.168.0.0/16
   - 10.0.0.0/8

@@ -1,0 +1,30 @@
+----
+-- User configuration file for lsyncd.
+--
+-- Simple example for default rsync, but executing moves through on the target.
+--
+-- For more examples, see /usr/share/doc/lsyncd*/examples/
+-- 
+
+settings {
+  logfile = "/var/log/lsyncd/lsyncd.log",
+  maxDelays = 1,
+  insist = true,
+}
+
+sync {
+default.rsync,
+source="{{ pg_backup_dir }}",
+target="{% if inventory_hostname == groups[server_group][0]%}{{hostvars[groups[server_group][1]]['ansible_host']}}{% else %}{{hostvars[groups[server_group][0]]['ansible_host']}}{% endif %}:{{ pg_backup_dir }}",
+
+rsync = {
+compress = true,
+acls = true,
+verbose = true,
+owner = true,
+group = true,
+perms = true,
+rsh = "/usr/bin/ssh -p 22 -o StrictHostKeyChecking=no"
+}
+}
+ 

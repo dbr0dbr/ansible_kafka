@@ -1,0 +1,51 @@
+#!/bin/bash
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD={{ pgpassword }}
+BACKUP_DIR="{{ pg_backup_dir }}"
+DAYSTORETAINBACKUP=10
+LOG="/var/log/backup_postgresql.log"
+STATUS="{{ scripts_dir }}/bak_log"
+
+let ResultCode=0
+TIMESTAMP=`date +%F-%H%M`
+BACKUP_NAME="backup-pgsql-$TIMESTAMP"
+
+mkdir -p $BACKUP_DIR
+let ResultCode=ResultCode+$?
+echo Mkdir = "$ResultCode"                      >  $LOG
+
+cd $BACKUP_DIR
+let ResultCode=ResultCode+$?
+echo CD = "$ResultCode"                         >> $LOG
+
+# For PGDump
+##cd $BACKUP_DIR && export PGPASSWORD=$POSTGRES_PASSWORD && pg_dumpall -h localhost -U $POSTGRES_USER | gzip > $BACKUP_DIR/$BACKUP_NAME.gz
+##let ResultCode=ResultCode+$?
+##echo PGdump = "$ResultCode"                     >> $LOG
+
+# For Binary
+#cd $BACKUP_DIR && export PGPASSWORD=$POSTGRES_PASSWORD && pg_basebackup -U $POSTGRES_USER  -R -Ft -z -D $BACKUP_DIR/$BACKUP_NAME
+cd $BACKUP_DIR && export PGPASSWORD=$POSTGRES_PASSWORD && sudo -u postgres pg_basebackup -U $POSTGRES_USER  -R -Ft -z -D $BACKUP_DIR/$BACKUP_NAME
+let ResultCode=ResultCode+$?
+echo Binary backup = "$ResultCode"              >> $LOG
+
+find $BACKUP_DIR -mtime +$DAYSTORETAINBACKUP -exec rm {} \;
+let ResultCode=ResultCode+$?
+echo Remove old file = "$ResultCode"            >> $LOG
+
+#find $BACKUP_DIR -mtime +$DAYSTORETAINBACKUP -type d -exec rmdir {} \;
+#find $BACKUP_DIR -type d -empty -exec rm {} \;
+
+for dir in `find $BACKUP_DIR -type d -empty -mtime +$DAYSTORETAINBACKUP`; do rm -rf $dir; done
+let ResultCode=ResultCode+$?
+echo Remove old directory = "$ResultCode"       >> $LOG
+
+chown postgres:postgres {{ pg_backup_dir }} -R
+let ResultCode=ResultCode+$?
+echo Chown = "$ResultCode"                      >> $LOG
+
+if [[ $ResultCode -gt 0 ]]; then
+  echo "ERROR" > $STATUS
+    else echo "OK" > $STATUS
+  exit 1;
+fi; 
