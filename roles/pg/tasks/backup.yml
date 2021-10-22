@@ -82,3 +82,18 @@
     user: root
     job: "{{ scripts_dir }}/pgsql_backup.sh"
     cron_file: pgsql_backup
+
+- name: Template configuration file for clean_wal_archive.sh
+  template:
+    src:  clean_wal_archive.sh.j2
+    dest: '{{ scripts_dir }}/clean_wal_archive.sh'
+    mode: '0755'
+
+- name: Creates a cron file for clean wal archive in /etc/cron.d
+  cron:
+    name: clean_wal_archive
+    minute: "*/30"
+    hour: "*"
+    user: root
+    job: "{{ scripts_dir }}/clean_wal_archive.sh"
+    cron_file: clean_wal_archive

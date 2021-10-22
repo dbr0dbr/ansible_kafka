@@ -1,0 +1,19 @@
+#!/bin/bash
+target_dir=/tmp
+mount_point=/dev/vda
+cleanup_usage=30
+
+function clean {
+  current_usage=`df -h |grep "$mount_point" |sed s/'%.*'//g |sed s/'^.* '//g`
+  if (( $current_usage < $cleanup_usage )); then exit 0; fi
+  IFS=$'\n'
+  oldest_date=`find $target_dir -type f -printf '%T+ %p\n' | sort | head -1 |awk -F '+' '{print $1}'`
+  echo "rm files for $oldest_date"
+  #for file in `find /tmp/ -type f -printf '%T+ %p\n' |grep "^$oldest_date" |sed s/"$oldest_date.* \/"/"\/"/g`; do echo "rm -rf '$file'"; done
+  for file in `find /tmp/ -type f -printf '%T+ %p\n' |grep "^$oldest_date" |sed s/"$oldest_date.* \/"/"\/"/g`; do rm -rf "$file"; done
+  if (( $current_usage > $cleanup_usage )); then clean; fi
+}
+
+clean
+echo "done"
+ 
