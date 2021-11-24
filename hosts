@@ -44,8 +44,15 @@ kafka-6	ansible_host=192.168.121.213 node_id=6
 ha-1 ansible_host=192.168.122.46 interface=enp1s0
 ha-2 ansible_host=192.168.122.66 interface=enp1s0
 
+[ha_https]
+ha1 ansible_host=192.168.121.193 interface=eth0
+ha2 ansible_host=192.168.121.240 interface=eth0
+
 [ha:vars]
 virtual_ip=192.168.123.3/24
+
+[ha_https:vars]
+virtual_ip=192.168.121.245/24
 
 [pg]
 pg-1   ansible_host=192.168.121.190  master=YES

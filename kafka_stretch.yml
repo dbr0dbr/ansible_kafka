@@ -4,4 +4,4 @@
     root
   roles:
    - kafka_stretch
-   - jenkins_agent
+#   - jenkins_agent

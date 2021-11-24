@@ -1,0 +1,80 @@
+- name: Install EPEL Repo
+  yum:
+    name=epel-release
+    state=present
+  environment: "{{ proxy_env }}"
+
+- name: Install soft
+  yum:
+     name: "{{ packages }}"
+  environment: "{{ proxy_env }}"
+  vars:
+    packages:
+    - keepalived
+    - haproxy
+    - nano
+
+- name: firewall - open ports 
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    #- 9092
+    #- 2181
+    #- 9001
+    - 443
+    - 80
+
+- name: firewall - open vrrp protobash 
+  firewalld:
+    rich_rule: 'rule protocol value="vrrp" accept'
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Set haproxy_connect_any flag on and keep it persistent across reboots
+  shell: "setsebool -P haproxy_connect_any 1"
+    
+- name: Template configuration file to keepalived.conf
+  template:
+    src: keepalived.conf.j2
+    dest: '/etc/keepalived/keepalived.conf'
+  notify:
+    - restart keepalived.service
+
+- name: Template configuration file to haproxy.cfg
+  template:
+    src: haproxy.cfg.j2
+    dest: '/etc/haproxy/haproxy.cfg'
+  notify:
+    - restart haproxy.service  
+
+- name: copy cert to haproxy
+  copy:
+    src: ha.pem
+    dest: "/etc/haproxy/ha.pem"
+
+- name: enable and start keepalived.service
+  systemd:
+    name: keepalived
+    state: started
+    enabled: yes
+
+- name: enable and start haproxy.service
+  systemd:
+    name: haproxy
+    state: started
+    enabled: yes
+
+- name: "Ensure /etc/rc.local contains 'sleep 5; systemctl restart haproxy'"
+  lineinfile:
+    name: /etc/rc.local
+    line: "sleep 5; systemctl restart haproxy"
+    state: present
+
+- name: Changing perm of "/etc/rc.local", adding "+x"
+  file: 
+    dest: /etc/rc.local 
+    mode: a+x

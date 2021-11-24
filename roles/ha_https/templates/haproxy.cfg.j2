@@ -1,0 +1,38 @@
+global
+        maxconn 4096
+        chroot /usr/share/haproxy
+        uid 99
+        gid 99
+        daemon
+        tune.ssl.default-dh-param  2048
+
+defaults
+        log     global
+        option  redispatch
+        option  tcp-smart-accept
+        option  tcp-smart-connect
+        retries 3
+        maxconn 2000
+        timeout connect 5000
+        timeout check   3000
+        timeout client  50000
+        timeout server  50000
+
+frontend http_frontend *:80
+        mode http
+        redirect scheme https code 301 if !{ ssl_fc }
+
+frontend https_frontend_ssl_terminate
+        mode http
+        bind *:443 ssl crt /etc/haproxy/ha.pem
+        option forwardfor header X-Real-IP
+        default_backend web_server_http
+
+backend web_server_http
+        mode http
+        balance roundrobin
+        # Отправляем трафик на backend по HTTPS
+        server s1_https 192.168.121.205:443 ssl verify none
+        server s2_https 192.168.121.239:443 ssl verify none
+
+

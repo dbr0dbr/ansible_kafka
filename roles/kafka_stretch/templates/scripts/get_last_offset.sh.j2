@@ -1,0 +1,4 @@
+#!/bin/bash
+if [ -z $1 ]; then echo "usage: get_last_offset.sh topic_name" ; exit 1; fi
+topicname=$1
+{{ kafka_dir }}/bin/kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic $topicname
