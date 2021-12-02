@@ -1,0 +1,18 @@
+#!/bin/bash 
+#curl -i -X PUT -H "Content-Type:application/json" http://localhost:8083/connectors/pg-connector/config -d @pg-put.json
+data='{"connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+"plugin.name": "pgoutput",
+"database.hostname": "192.168.121.136",
+"database.port": "5432",
+"database.user": "postgres",
+"database.password": "postgres",
+"database.dbname" : "testdb",
+"database.server.name": "pg-dev",
+"table.whitelist": "public.(.*)",
+"heartbeat.interval.ms": "5000",
+"heartbeat.action.query": "INSERT INTO debezium_heartbeat (heartbeat_text) VALUES ('ololo!!!!!!!!!!')",
+"slot.name": "dbname_debezium",
+"publication.name": "dbname_publication"}'
+
+curl -i -X PUT -H  "Content-Type:application/json"  http://localhost:8083/connectors/pg-connector/config -d "$data"
+ 
